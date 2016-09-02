@@ -1,84 +1,24 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width">
-  <link rel="stylesheet" type="text/css" href="css/style.css">
-  <title>Västtrafik reseplanerare</title>
-</head>
+  <meta charset="utf-8" />
+  <title>Klara CMS</title>
+  <link rel="stylesheet" href="/styles.css" />
+<link href="/styles.css" rel="stylesheet"></head>
 <body>
-
-  <div class="error-message"></div>
-
-  <form class="login-form" action="login" method="post">
-    <fieldset>
-      <legend>Logga in</legend>
-      <input type="text" name="user" class="login-form__input" placeholder="Username">
-      <input type="password" name="pass" class="login-form__input" placeholder="password">
-    </fieldset>
-
-    <button class="login-form__button" type="submit">Logga in</button>
-  </form>
-
-<script type="text/javascript">
-  const form = document.querySelector('.login-form');
-  const msg = document.querySelector('.error-message');
-  const authTokenKey = 'authToken';
-
-  function handleResponse(resp) {
-    if (resp.ok) return resp;
-
-    const isJSON = /json/.test(resp.headers.get('Content-Type'));
-    return Promise.reject(isJSON ? resp.json() : new Error(response.statusText));
-  }
-
-  function isAuthenticated() {
-    const token = localStorage.getItem(authTokenKey);
-    if (!token) return;
-
-    const fetchOptions = {
-      method: 'head',
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
-    };
-
-    fetch('/login', fetchOptions)
-      .then((resp) => {
-        console.log(resp);
-      });
-  }
-
-  window.addEventListener('DOMContentLoaded', isAuthenticated, false);
-
-  form.addEventListener('submit', (evt) => {
-    evt.preventDefault();
-    const fetchOptions = {
-      method: 'post',
-      body: JSON.stringify({
-        user: form['user'].value,
-        pass: form['pass'].value
-      }),
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json'
-      }
-    };
-
-    fetch('/login', fetchOptions)
-      .then(handleResponse)
-      .then((resp) => resp.json())
-      .then((json) => {
-        if (json.success) {
-          localStorage.setItem(authTokenKey, json.token);
-          location.href = '/';
-        } else {
-          msg.textContent = json.message;
-          form.querySelector('input').select();
-        }
-      })
-  }, false);
-</script>
-
-</body>
+  <div class="login-form">
+    <h1>Klara Login</h1>
+    <form method="POST" action="/login">
+      <div class="login-form__field">
+        <label for="username">Användarnamn:</label>
+        <input id="username" type="text" name="username" autofocus spellcheck=false>
+      </div>
+      <div class="login-form__field">
+        <label for="password">Lösenord:</label>
+        <input type="password" name="password">
+      </div>
+      <input type="submit" class="login-form__submit btn btn--primary" value="Logga in">
+    </form>
+  </div>
+<script type="text/javascript" src="/main.js"></script></body>
 </html>
