@@ -1,0 +1,60 @@
+html {
+  box-sizing: border-box;
+}
+
+*, *:before, *:after {
+  box-sizing: inherit;
+}
+
+body {
+  font-family: sans-serif;
+  color: blue;
+}
+
+.stationInputWrapper {
+  position: relative;
+}
+
+.stationInputWrapper input {
+  margin-left: 10px;
+}
+
+.stationInputWrapper .suggestions {
+  background: white;
+  border: 1px solid gray;
+  box-shadow: 2px 2px 10px gray;
+  display: none;
+  list-style: none;
+  padding: 0;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 10;
+}
+
+.stationInputWrapper .suggestions.active {
+  display: block;
+}
+
+.stationInputWrapper .suggestions li {
+  cursor: pointer;
+  padding: 0.25em 0.5em;
+}
+
+.stationInputWrapper .suggestions li:hover {
+  text-decoration: underline;
+}
+
+.error-message {
+  background: darkred;
+  color: white;
+}
+
+.login-form {}
+.login-form .login-form__input {
+  display: block;
+  width: 100%;
+}
+.login-form .login-form__button {
+  display: block;
+}

@@ -1,0 +1,22 @@
+{
+  "name": "vasttrafik",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "scripts": {
+    "start": "nodemon server.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "body-parser": "^1.15.2",
+    "express": "^4.14.0",
+    "isomorphic-fetch": "^2.2.1",
+    "jsonwebtoken": "^7.1.8",
+    "morgan": "^1.7.0",
+    "serve-favicon": "^2.3.0"
+  },
+  "devDependencies": {
+    "nodemon": "^1.10.0"
+  }
+}
