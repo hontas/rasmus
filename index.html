@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width">
+  <link rel="stylesheet" type="text/css" href="css/style.css">
+  <title>Västtrafik reseplanerare</title>
+  <script type="text/javascript" src="js/vendor/vue.js"></script>
+</head>
+<body>
+
+  <div id="app">
+    <h1>Sök resa (beta)</h1>
+    <label>
+      Från: <input v-model="from" placeholder="Ange station">
+    </label>
+    <label>
+      Till: <input v-model="dest" placeholder="Ange station">
+    </label>
+
+    <li v-for="location in locations">
+      {{ location.name }}
+    </li>
+  </div>
+
+  <hr>
+
+  <form id="resPlanForm">
+    <div class="stationInputWrapper">
+      <label>
+        Från: <input type="text" class="label" placeholder="Ange station">
+      </label>
+      <input type="hidden" class="value" id="fran">
+      <ul class="suggestions"></ul>
+    </div>
+
+    <div class="stationInputWrapper">
+      <label>
+        Till: <input type="text" class="label" placeholder="Ange station">
+      </label>
+      <input type="hidden" class="value" id="till">
+      <ul class="suggestions"></ul>
+    </div>
+
+    <button type="submit">Sök</button>
+  </form>
+
+  <ul id="trips"></ul>
+
+  <script src="js/vendor/moment.js"></script>
+  <script src="js/vendor/jquery-3.0.0.js"></script>
+  <script src="js/sl.js"></script>
+  <script src="js/vt.js"></script>
+  <script src="js/script.js"></script>
+  <script>
+    new Vue({
+      el: '#app',
+      data: {
+        message: 'Hello Vue.js!',
+        locations: [
+          {
+            "name": "Linnéplatsen, Göteborg",
+            "lon": "11.952246",
+            "lat": "57.689982",
+            "id": "9021014004510000",
+            "idx": "1"
+          },
+          {
+            "name": "Linneviken, Tjörn",
+            "lon": "11.521600",
+            "lat": "58.017962",
+            "id": "9021014015691000",
+            "idx": "2"
+          },
+          {
+            "name": "Linnekullevägen, Mark",
+            "lon": "12.348311",
+            "lat": "57.459283",
+            "id": "9021014063218000",
+            "idx": "3"
+          },
+          {
+            "name": "Linnéparken, Borås",
+            "lon": "12.944898",
+            "lat": "57.726757",
+            "id": "9021014082732000",
+            "idx": "4"
+          },
+          {
+            "name": "Linnégatan, Alingsås",
+            "lon": "12.516607",
+            "lat": "57.926560",
+            "id": "9021014017582000",
+            "idx": "5"
+          },
+          {
+            "name": "Blinneberg, Ale",
+            "lon": "12.231424",
+            "lat": "58.008901",
+            "id": "9021014016753000",
+            "idx": "28"
+          },
+          {
+            "name": "Södra Linnégatan, Strömstad",
+            "lon": "11.181206",
+            "lat": "58.935419",
+            "id": "9021014026497000",
+            "idx": "29"
+          },
+          {
+            "name": "Linnarhultsvägen, Göteborg",
+            "lon": "12.064593",
+            "lat": "57.776611",
+            "id": "9021014004500000",
+            "idx": "50"
+          }
+        ]
+      }
+    });
+  </script>
+</body>
+</html>

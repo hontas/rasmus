@@ -19,8 +19,8 @@ var VT = (function($) {
     const date = moment().format("YYYY-MM-DD");
     const time = moment().format("HH:mm");
 
-    const requestUrl = `${baseUrl}/trip?originId=${from}&destId=${dest}&date=${date}&time=${time}`;
-    anropaVasttrafik(requestUrl)
+    const tripUrl = `${baseUrl}/trip?originId=${from}&destId=${dest}&date=${date}&time=${time}`;
+    anropaVasttrafik(tripUrl)
       .then(visaReseForslag);
   });
 
@@ -70,12 +70,25 @@ var VT = (function($) {
 
   function visaStationsForslag(json) {
     console.log(json);
-    const stops = json.LocationList.StopLocation;
+    const stops = json.LocationList && json.LocationList.StopLocation;
 
     return Array.isArray(stops) ? stops
       .slice(0, ANTAL_STATIONS_FORSLAG)
       .map((loc) => `<li data-id="${loc.id}">${loc.name}</li>`)
       .join('\n') : '';
+  }
+
+  function getDetails(trips) {
+    return Promise.all(trips.map(getDetail));
+  }
+
+  function getDetail(trip) {
+    const ref = getTripRef(trip);
+    return anropaVasttrafik(`${baseUrl}/journeyDetail?ref=${ref}`);
+  }
+
+  function getTripRef(trip) {
+    return decodeURIComponent(trip.Leg.JourneyDetailRef.ref).split('?ref=')[1];
   }
 
   function visaReseForslag(json) {
@@ -87,9 +100,14 @@ var VT = (function($) {
       return;
     }
 
-    const html = json.TripList.Trip.map(function(trip) {
+    renderToDOM(trips);
+  }
+
+  function renderToDOM(trips) {
+    $trips.html('');
+    const html = trips.map((trip) => {
       return getLeg(trip.Leg);
-    }).map(function(resa) {
+    }).map((resa) => {
       return `<li>${resa}</li>`;
     }).join('<br>');
 
@@ -111,12 +129,18 @@ var VT = (function($) {
 
   function getOneLeg(leg) {
     var track = leg.Origin.track ? `, läge ${leg.Origin.track}` : '';
-    return `${leg.Origin.time} ${leg.name} från ${leg.Origin.name}${track}`;
+    var realTime = leg.Origin.rtTime;
+    var time = leg.Origin.time;
+    var timeStr = (realTime && realTime !== time) ? `${time} (${realTime})` : `${time}`;
+    return `${timeStr} ${leg.name} från ${leg.Origin.name}${track}`;
   }
 
   function getDestText(leg) {
     var track = leg.Destination.track ? `, läge ${leg.Destination.track}` : '';
-    return `${leg.Destination.time} ${leg.Destination.name}${track}`;
+    var realTime = leg.Destination.rtTime;
+    var time = leg.Destination.time;
+    var timeStr = (realTime && realTime !== time) ? `${time} (${realTime})` : `${time}`;
+    return `${timeStr} ${leg.Destination.name}${track}`;
   }
 
   function getClosestStop(lat, long) {
@@ -145,6 +169,7 @@ var VT = (function($) {
         },
         success(resp) {
           authToken = resp.access_token;
+          console.log(authToken);
           const expDate = new Date(Date.now() + resp.expires_in * 1000);
           console.log(`AuthToken expires ${expDate.toLocaleString()}`);
           resolve();
