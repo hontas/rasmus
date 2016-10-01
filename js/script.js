@@ -2,11 +2,9 @@ window.addEventListener('DOMContentLoaded', () => {
   const positionPromise = getPosition();
 
   VT.getAccessToken()
-    .then(() => Promise.resolve(positionPromise))
+    .then(() => positionPromise)
     .then((position) => VT.getClosestStop(position.coords.latitude, position.coords.longitude));
 
-  positionPromise
-    .then((position) => SL.closestStop(position.coords.latitude, position.coords.longitude));
 }, false);
 
 function getPosition() {

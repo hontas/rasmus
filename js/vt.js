@@ -1,117 +1,35 @@
 // Västtrafik api
 
-var VT = (function($) {
+var VT = (function() {
 
   const baseUrl = "https://api.vasttrafik.se/bin/rest.exe/v2";
-  const ANTAL_STATIONS_FORSLAG = 3;
   let authToken;
 
-  const stationInputWrapper = document.querySelectorAll(".stationInputWrapper");
-  const $trips = $("#trips");
-  const $resPlanForm = $("#resPlanForm");
-  const $fran = $("#fran");
-  const $till = $("#till");
-
-  $resPlanForm.on("submit", function(evt) {
-    evt.preventDefault();
-    const from = $fran.prop("value");
-    const dest = $till.prop("value");
+  function getTripSuggestion(from, dest) {
     const date = moment().format("YYYY-MM-DD");
     const time = moment().format("HH:mm");
-
     const tripUrl = `${baseUrl}/trip?originId=${from}&destId=${dest}&date=${date}&time=${time}`;
-    anropaVasttrafik(tripUrl)
-      .then(visaReseForslag);
-  });
+    return anropaVasttrafik(tripUrl)
+      .then((json) => asArray(json.TripList.Trip)
+        .map((trip) => asArray(trip.Leg))
+      );
+  }
 
-  stationInputWrapper.forEach(function(wrapper) {
-    const input = wrapper.querySelector('.label');
-    const value = wrapper.querySelector('.value');
-    const suggestions = wrapper.querySelector('.suggestions');
-
-    input.addEventListener('input', (evt) => {
-      evt.preventDefault();
-      const text = evt.target.value;
-      const requestUrl = `${baseUrl}/location.name?input=${encodeURIComponent(text)}`;
-      anropaVasttrafik(requestUrl)
-        .then((json) => {
-          suggestions.innerHTML = visaStationsForslag(json);
-          suggestions.classList.add("active");
-        });
-    }, false);
-
-    suggestions.addEventListener('click', (evt) => {
-      evt.preventDefault();
-      input.value = evt.target.textContent;
-      value.value = evt.target.dataset.id;
-      suggestions.classList.remove("active");
-    }, false);
-  });
+  function getLocationSuggestions(text) {
+    const requestUrl = `${baseUrl}/location.name?input=${encodeURIComponent(text)}`;
+    return anropaVasttrafik(requestUrl)
+      .then((json) => asArray(json.LocationList.StopLocation));
+  }
 
   function anropaVasttrafik(url) {
     const headers = {
       Authorization: `Bearer ${authToken}`
     };
 
-    return new Promise((resolve, reject) => {
-      $.ajax({
-        dataType: "json",
-        url: `${url}&format=json`,
-        headers,
-        success(json) {
-          resolve(json);
-        },
-        error(err) {
-          reject(err);
-        }
-      });
-    });
-  }
-
-  function visaStationsForslag(json) {
-    console.log(json);
-    const stops = json.LocationList && json.LocationList.StopLocation;
-
-    return Array.isArray(stops) ? stops
-      .slice(0, ANTAL_STATIONS_FORSLAG)
-      .map((loc) => `<li data-id="${loc.id}">${loc.name}</li>`)
-      .join('\n') : '';
-  }
-
-  function getDetails(trips) {
-    return Promise.all(trips.map(getDetail));
-  }
-
-  function getDetail(trip) {
-    const ref = getTripRef(trip);
-    return anropaVasttrafik(`${baseUrl}/journeyDetail?ref=${ref}`);
-  }
-
-  function getTripRef(trip) {
-    return decodeURIComponent(trip.Leg.JourneyDetailRef.ref).split('?ref=')[1];
-  }
-
-  function visaReseForslag(json) {
-    console.log(json);
-    const trips = json.TripList.Trip;
-
-    if (!Array.isArray(trips)) {
-      $trips.html('');
-      return;
-    }
-
-    renderToDOM(trips);
-  }
-
-  function renderToDOM(trips) {
-    $trips.html('');
-    const html = trips.map((trip) => {
-      return getLeg(trip.Leg);
-    }).map((resa) => {
-      return `<li>${resa}</li>`;
-    }).join('<br>');
-
-    $trips.html(html);
+    return fetch(`${url}&format=json`, {
+      headers
+    })
+      .then(fetchMiddleware);
   }
 
   function getLeg(leg) {
@@ -158,32 +76,37 @@ var VT = (function($) {
   }
 
   function getAccessToken() {
-    return new Promise((resolve, reject) => {
-      $.ajax('https://api.vasttrafik.se:443/token', {
-        headers: {
-          Authorization: 'Basic V3NWQzVFOEFvYnBaRV9DOGRpX3FFZF9DU0dJYTpLT3FmY3o3cmpBNW1DeFQ5RkJtVEhnQ3N4R01h'
-        },
-        method: 'POST',
-        data: {
-          grant_type: 'client_credentials'
-        },
-        success(resp) {
-          authToken = resp.access_token;
-          console.log(authToken);
-          const expDate = new Date(Date.now() + resp.expires_in * 1000);
-          console.log(`AuthToken expires ${expDate.toLocaleString()}`);
-          resolve();
-        },
-        error(err) {
-          reject(err);
-        }
+    return fetch('https://api.vasttrafik.se:443/token', {
+      headers: {
+        Authorization: 'Basic V3NWQzVFOEFvYnBaRV9DOGRpX3FFZF9DU0dJYTpLT3FmY3o3cmpBNW1DeFQ5RkJtVEhnQ3N4R01h',
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      method: 'POST',
+      body: 'grant_type=client_credentials'
+    })
+      .then(fetchMiddleware)
+      .then((resp) => {
+        authToken = resp.access_token;
+        console.log(authToken);
+        const expDate = new Date(Date.now() + resp.expires_in * 1000);
+        console.log(`AuthToken expires ${expDate.toLocaleString()}`);
       });
-    });
+  }
+
+  function fetchMiddleware(response) {
+    if (response.ok) return response.json();
+    return response.json().then((err) => Promise.reject(err));
+  }
+
+  function asArray(arg) {
+    return arg && [].concat(arg) || [];
   }
 
   return {
     getAccessToken,
-    getClosestStop
+    getClosestStop,
+    getLocationSuggestions,
+    getTripSuggestion
   };
 
-}(jQuery));
+}());
