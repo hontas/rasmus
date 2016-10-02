@@ -3,6 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width">
+  <link rel="stylesheet" type="text/css" href="css/font-awesome.css">
   <link rel="stylesheet" type="text/css" href="css/style.css">
   <title>Västtrafik reseplanerare</title>
   <script type="text/javascript" src="js/vendor/vue.js"></script>
@@ -13,12 +14,23 @@
     <h1>Sök resa (beta)</h1>
     <location-input label="Från" @set-location="setFrom"></location-input>
     <location-input label="Till" @set-location="setDest"></location-input>
-    <button v-on:click="findTrip" :disabled="!from || !dest">Sök</button>
-    <ol v-for="(trip, index) in trips">
-      <li class="trip" v-for="leg in trip">
-        {{ leg.Origin.rtTime || leg.Origin.time }} {{ leg.Origin.name }} Läge {{ leg.Origin.track }} - {{ leg.Destination.name }} ({{ leg.Destination.rtTime || leg.Destination.time }})
+    <button class="btn" @click="findTrip" :disabled="!from || !dest">
+      Sök
+      <i class="fa fa-spin" :class="{ 'fa-spinner': isLoading }" aria-hidden="true"></i>
+    </button>
+    <ul class="trips">
+      <li v-for="(trip, index) in trips">
+        <ul class="trip">
+          <li class="trip__leg" :class="leg.type" v-for="(leg, index) in trip">
+            {{ leg.Origin.rtTime || leg.Origin.time }} {{ leg.name }} från {{ leg.Origin.name }} läge {{ leg.Origin.track || '' }}
+            <br/>
+            <span class="trip__dest" v-if="isLast(index, trip)">
+              ⇥ {{ leg.Destination.rtTime || leg.Destination.time }}
+            </span>
+          </li>
+        </ul>
       </li>
-    </ol>
+    </ul>
   </div>
 
   <script src="js/vendor/moment.js"></script>
@@ -57,7 +69,7 @@
           </label>
           <ul class="location-input__suggestions">
             <li v-for="suggestion in suggestions" :key="suggestion.id">
-              <a href="#" @click.prevent="onSelect(suggestion)">{{ suggestion.name }}</a>
+              <a href="#" @click.prevent="onSelect(suggestion)" @keyup.space="onSelect(suggestion)">{{ suggestion.name }}</a>
             </li>
           </ul>
         </div>`
@@ -68,6 +80,7 @@
       data: {
         from: null,
         dest: null,
+        isLoading: false,
         trips: []
       },
       methods: {
@@ -78,11 +91,16 @@
           this.dest = location.id;
         },
         findTrip() {
+          this.isLoading = true;
           VT.getTripSuggestion(this.from, this.dest)
             .then((trips) => {
               this.trips = trips;
+              this.isLoading = false;
               console.log(trips);
             });
+        },
+        isLast(index, trip) {
+          return index === trip.length - 1;
         }
       }
     });

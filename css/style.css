@@ -1,3 +1,7 @@
+:root {
+  --brand-color: darkred;
+}
+
 html {
   box-sizing: border-box;
 }
@@ -7,54 +11,127 @@ html {
 }
 
 body {
-  font-family: sans-serif;
-  color: darkred;
+  font-family: Helvetica Neue, sans-serif;
+  color: var(--brand-color);
 }
 
-.stationInputWrapper {
+.btn {
+  border: none;
+  background: var(--brand-color);
+  color: white;
+  margin-top: 1em;
+  min-width: 100px;
+  padding: 0.5em 1em;
   position: relative;
 }
 
-.stationInputWrapper input {
-  margin-left: 10px;
+.btn[disabled] {
+  color: darkgoldenrod;
+  border-color: #500;
 }
 
-.stationInputWrapper .suggestions {
-  background: white;
+.btn:focus {
+  outline-color: var(--brand-color);
+}
+
+.btn .fa {
+  position: absolute;
+  top: 0.62em;
+  right: 1em;
+}
+
+.location-input {
+  --left-offset: 60px;
+  position: relative;
+  line-height: 1.5em;
+  margin-bottom: 0.5em;
+}
+
+.location-input label {
+  font-size: smaller;
+}
+
+.location-input input {
+  border: 1px solid whitesmoke;
+  padding: 0.5em;
+  position: absolute;
+  left: var(--left-offset);
+}
+.location-input input:focus {
   border: 1px solid gray;
-  box-shadow: 2px 2px 10px gray;
-  display: none;
+  outline: none;
+}
+
+.location-input .location-input__suggestions {
+  background: var(--brand-color);
+  font-size: small;
   list-style: none;
   padding: 0;
   position: absolute;
-  top: 0;
-  left: 0;
+  top: 1.5em;
+  left: var(--left-offset);
   z-index: 10;
 }
-
-.stationInputWrapper .suggestions.active {
+.location-input .location-input__suggestions li:first-child:before {
+  --arrow-size: 5px;
+  border-left: var(--arrow-size) solid transparent;
+  border-right: var(--arrow-size) solid transparent;
+  border-bottom: var(--arrow-size) solid var(--brand-color);
+  content: '';
   display: block;
+  position: absolute;
+  top: -5px;
+  left: 0.5em;
+  width: 0;
+  height: 0;
 }
 
-.stationInputWrapper .suggestions li {
-  cursor: pointer;
-  padding: 0.25em 0.5em;
-}
-
-.stationInputWrapper .suggestions li:hover {
-  text-decoration: underline;
-}
-
-.error-message {
-  background: darkred;
+.location-input .location-input__suggestions a {
   color: white;
+  display: block;
+  padding: 0.25em 0.5em;
+  text-decoration: none;
 }
 
-.login-form {}
-.login-form .login-form__input {
-  display: block;
-  width: 100%;
+.location-input .location-input__suggestions a:hover,
+.location-input .location-input__suggestions a:focus {
+  background: whitesmoke;
+  color: var(--brand-color);
+  outline: none;
 }
-.login-form .login-form__button {
-  display: block;
+
+.trips, .trip {
+  list-style: none;
+  padding-left: 0;
+}
+
+.trip {
+  margin-left: 0.5em;
+  margin-bottom: 1em;
+}
+
+.trip__dest {
+  line-height: 1.5em;
+}
+
+.BUS:before {
+  content: '🚌';
+}
+.TRAM:before {
+  content: '🚋';
+}
+
+.REG:before,
+.VAS:before,
+.TRAIN:before {
+  content: '🚅';
+}
+.WALK:before {
+  content: '🚶';
+}
+.SHIP:before {
+  content: '🛳';
+}
+.FERRY:before {
+  content: '⛴';
 }
