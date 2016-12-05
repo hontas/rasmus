@@ -32,11 +32,28 @@
       </li>
     </ul>
   </div>
+  
+  <div id="trafiken">
+    <h2></h2>
+    <audio controls/>
+  </div>
 
+  <script src="https://code.jquery.com/jquery-3.1.0.js"></script>
   <script src="js/vendor/moment.js"></script>
   <script src="js/vt.js"></script>
   <script src="js/script.js"></script>
   <script>
+    const getUrl = (url) => `${document.location.protocol}//ajax.googleapis.com/ajax/services/feed/load?v=1.0&num=10&callback=?&q=${encodeURIComponent(url)}`;
+    const url = "http://api.sr.se/api/rss/pod/10326";
+    $.ajax({
+        url: getUrl(url),
+        dataType: 'json',
+        success(data) {
+          $('#trafiken h2').text(data.responseData.feed.entries[0].title);
+          $('audio').attr('src', data.responseData.feed.entries[0].link);
+        }
+    });
+    
     Vue.component('location-input', {
       props: {
         label: String
