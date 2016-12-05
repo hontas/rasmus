@@ -34,7 +34,7 @@
   </div>
   
   <div id="trafiken">
-    <h2></h2>
+    <h3/>
     <audio controls/>
   </div>
 
@@ -49,7 +49,7 @@
         url: getUrl(url),
         dataType: 'json',
         success(data) {
-          $('#trafiken h2').text(data.responseData.feed.entries[0].title);
+          $('#trafiken h3').text(data.responseData.feed.entries[0].title);
           $('audio').attr('src', data.responseData.feed.entries[0].link);
         }
     });
