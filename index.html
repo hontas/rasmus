@@ -11,28 +11,19 @@
 <body>
 
   <div id="app">
-    <h1>Sök resa (beta)</h1>
-    <location-input label="Från" @set-location="setFrom"></location-input>
-    <location-input label="Till" @set-location="setDest"></location-input>
+    <h1>
+      Sök resa (beta)
+      <i class="fa" :class="{ 'fa-spin':  !initialized, 'fa-spinner': !initialized }"></i>
+    </h1>
+    <location-input label="Från" :disabled="!initialized" @set-location="setFrom"></location-input>
+    <location-input label="Till" :disabled="!initialized" @set-location="setDest"></location-input>
     <button class="btn" @click="findTrip" :disabled="!from || !dest">
       Sök
       <i class="fa fa-spin" :class="{ 'fa-spinner': isLoading }" aria-hidden="true"></i>
     </button>
-    <ul class="trips">
-      <li v-for="(trip, index) in trips">
-        <ul class="trip">
-          <li class="trip__leg" :class="leg.type" v-for="(leg, index) in trip">
-            {{ leg.Origin.rtTime || leg.Origin.time }} {{ leg.name }} från {{ leg.Origin.name }} läge {{ leg.Origin.track || '' }}
-            <br/>
-            <span class="trip__dest" v-if="isLast(index, trip)">
-              ⇥ {{ leg.Destination.rtTime || leg.Destination.time }}
-            </span>
-          </li>
-        </ul>
-      </li>
-    </ul>
+    <trips-list :trips="trips"></trips-list>
   </div>
-  
+
   <div id="trafiken">
     <h3></h3>
     <audio id="audio" controls/>
@@ -41,12 +32,12 @@
   <script src="https://code.jquery.com/jquery-3.1.0.js"></script>
   <script src="js/vendor/moment.js"></script>
   <script src="js/vt.js"></script>
-  <script src="js/script.js"></script>
   <script>
     const getUrl = (url) => `${document.location.protocol}//ajax.googleapis.com/ajax/services/feed/load?v=1.0&num=10&callback=?&q=${encodeURIComponent(url)}`;
-    const url = "http://api.sr.se/api/rss/pod/10326";
+    const urlSthlm = "http://api.sr.se/api/rss/pod/10326";
+    const urlGbg = "http://api.sr.se/api/rss/pod/18748";
     $.ajax({
-        url: getUrl(url),
+        url: getUrl(urlGbg),
         dataType: 'json',
         success(data) {
           console.log('Trafikmeddelanden hämtade', data.responseData.feed.entries[0]);
@@ -54,21 +45,25 @@
           $('#audio').attr('src', data.responseData.feed.entries[0].link);
         }
     });
-    
+
     Vue.component('location-input', {
       props: {
-        label: String
+        label: String,
+        disabled: Boolean
       },
       data() {
         return {
+          show: false,
           location: {},
           suggestions: []
         };
       },
+      created() {
+        this.getSuggestions = debounce(this.getSuggestions, 350, this);
+      },
       methods: {
         onInput(event) {
-          VT.getLocationSuggestions(event.target.value)
-            .then((stops) => this.suggestions = stops.slice(0, 5));
+          this.getSuggestions(event);
         },
         onSelect(suggestion) {
           this.location = suggestion;
@@ -78,19 +73,95 @@
         selectFirstSuggestion() {
           if (this.suggestions.length === 0) return;
           this.onSelect(this.suggestions[0]);
+        },
+        handleKeyInput(e) {
+          const dict = {
+            ArrowUp: 'previousElementSibling',
+            ArrowDown: 'nextElementSibling'
+          };
+
+          const getSibling = (el) => el.parentElement[dict[e.key]];
+
+          if (["ArrowDown", "ArrowUp"].includes(e.key) && this.show && this.suggestions.length) {
+            const focused = this.$el.querySelector('.location-input__suggestions a:focus');
+            if (!focused) return this.$el.querySelector('.location-input__suggestions a').focus();
+            const next = getSibling(focused);
+            if (!next) return;
+            next.querySelector('a').focus();
+          }
+        },
+        getSuggestions(event) {
+          VT.getLocationSuggestions(event.target.value)
+            .then((stops) => {
+              this.suggestions = stops.slice(0, 5);
+              this.showDropDown();
+            });
+        },
+        showDropDown() {
+          this.show = true;
+        },
+        hideDropDown() {
+          this.show = false;
+          document.activeElement.blur();
         }
       },
       template: `
-        <div class="location-input">
+        <div class="location-input"
+          @focus="showDropDown"
+          @keyup.esc="hideDropDown">
+
           <label>
-            {{label}}: <input v-model="location.name" @input="onInput" @keyup.enter="selectFirstSuggestion" placeholder="Ange station">
+            {{label}}:
+            <input v-model="location.name"
+              @input="onInput"
+              @focus="showDropDown"
+              @keyup.enter="selectFirstSuggestion"
+              @keyup="handleKeyInput"
+              placeholder="Ange station"
+              :disabled="disabled">
+
           </label>
-          <ul class="location-input__suggestions">
-            <li v-for="suggestion in suggestions" :key="suggestion.id">
+          <ul v-show="show" class="location-input__suggestions">
+            <li v-for="suggestion in suggestions" :key="suggestion.id" @keyup="handleKeyInput">
               <a href="#" @click.prevent="onSelect(suggestion)" @keyup.space="onSelect(suggestion)">{{ suggestion.name }}</a>
             </li>
           </ul>
         </div>`
+    });
+
+    Vue.component('trips-list', {
+      props: {
+        trips: Array
+      },
+      template: `
+        <ul class="trips">
+          <li v-for="trip in trips">
+            <trips-item :trip="trip">
+          </li>
+        </ul>
+      `
+    });
+
+    Vue.component('trips-item', {
+      props: {
+        trip: Object
+      },
+      methods: {
+        isLast(index, trip) {
+          return index === trip.length - 1;
+        }
+      },
+      template: `
+        <ul class="trip">
+          <li class="trip__leg" :class="leg.type" v-for="(leg, index) in trip">
+            {{ leg.Origin.rtTime || leg.Origin.time }} {{ leg.name }} från {{ leg.Origin.name }} läge {{ leg.Origin.track || '' }}
+            <br/>
+            <span class="trip__dest" v-if="isLast(index, trip)">
+              ⇥ {{ leg.Destination.rtTime || leg.Destination.time }}
+            </span>
+          </li>
+        </ul>
+      `
     });
 
     new Vue({
@@ -99,7 +170,15 @@
         from: null,
         dest: null,
         isLoading: false,
-        trips: []
+        trips: [],
+        initialized: false
+      },
+      created() {
+        const positionPromise = getPosition();
+        VT.getAccessToken()
+          .then(() => this.initialized = true)
+          .then(() => positionPromise)
+          .then((position) => VT.getClosestStop(position.coords.latitude, position.coords.longitude));
       },
       methods: {
         setFrom(location) {
@@ -116,12 +195,26 @@
               this.isLoading = false;
               console.log(trips);
             });
-        },
-        isLast(index, trip) {
-          return index === trip.length - 1;
         }
       }
     });
+
+    function debounce(fn, delay, context) {
+      var timeoutId;
+      context = context || this;
+      return (...args) => {
+        if (timeoutId) clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => fn.apply(context, args), delay);
+      }
+    }
+
+    function getPosition() {
+      return new Promise((resolve, reject) => {
+        if (!("geolocation" in navigator)) return reject();
+
+        navigator.geolocation.getCurrentPosition(resolve);
+      });
+    }
   </script>
 </body>
 </html>

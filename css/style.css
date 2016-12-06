@@ -15,6 +15,17 @@ body {
   color: var(--brand-color);
 }
 
+#app,
+#trafiken {
+  display: inline-block;
+  margin-right: 1em;
+  min-width: 500px;
+}
+
+#trafiken {
+  vertical-align: top;
+}
+
 .btn {
   border: none;
   background: var(--brand-color);
@@ -53,6 +64,7 @@ body {
 
 .location-input input {
   border: 1px solid whitesmoke;
+  min-width: 220px;
   padding: 0.5em;
   position: absolute;
   left: var(--left-offset);

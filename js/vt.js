@@ -90,6 +90,7 @@ var VT = (function() {
         console.log(authToken);
         const expDate = new Date(Date.now() + resp.expires_in * 1000);
         console.log(`AuthToken expires ${expDate.toLocaleString()}`);
+        return resp.access_token;
       });
   }
 
