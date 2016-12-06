@@ -49,6 +49,7 @@
         url: getUrl(url),
         dataType: 'json',
         success(data) {
+          console.log('Trafikmeddelanden hämtade', data.responseData.feed.entries[0]);
           $('#trafiken h3').text(data.responseData.feed.entries[0].title);
           $('audio').attr('src', data.responseData.feed.entries[0].link);
         }
