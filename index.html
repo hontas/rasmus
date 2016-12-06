@@ -34,8 +34,8 @@
   </div>
   
   <div id="trafiken">
-    <h3/>
-    <audio controls/>
+    <h3></h3>
+    <audio id="audio" controls/>
   </div>
 
   <script src="https://code.jquery.com/jquery-3.1.0.js"></script>
@@ -51,7 +51,7 @@
         success(data) {
           console.log('Trafikmeddelanden hämtade', data.responseData.feed.entries[0]);
           $('#trafiken h3').text(data.responseData.feed.entries[0].title);
-          $('audio').attr('src', data.responseData.feed.entries[0].link);
+          $('#audio').attr('src', data.responseData.feed.entries[0].link);
         }
     });
     
