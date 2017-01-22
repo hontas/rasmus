@@ -33,18 +33,18 @@
   <script src="js/vendor/moment.js"></script>
   <script src="js/vt.js"></script>
   <script>
-    const getUrl = (url) => `${document.location.protocol}//ajax.googleapis.com/ajax/services/feed/load?v=1.0&num=10&callback=?&q=${encodeURIComponent(url)}`;
+    const getUrl = (url) => `${document.location.protocol}//api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(url)}`;
     const urlSthlm = "http://api.sr.se/api/rss/pod/10326";
     const urlGbg = "http://api.sr.se/api/rss/pod/18748";
     $.ajax({
-        url: getUrl(urlGbg),
-        dataType: 'json',
-        success(data) {
-          console.log('Trafikmeddelanden hämtade', data.responseData.feed.entries[0]);
-          $('#trafiken h3').text(data.responseData.feed.entries[0].title);
-          $('#audio').attr('src', data.responseData.feed.entries[0].link);
-        }
-    });
+      url: getUrl(urlGbg),
+      dataType: 'json',
+      success(data) {
+        console.log('Trafikmeddelanden hämtade', data.items[0]);
+        $('#trafiken h3').text(data.items[0].title);
+        $('#audio').attr('src', data.items[0].link);
+     }
+  });
 
     Vue.component('location-input', {
       props: {
