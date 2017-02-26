@@ -26,26 +26,14 @@
 
   <div id="trafiken">
     <h3></h3>
-    <audio id="audio" controls/>
+    <audio id="audio" controls autoplay="true" />
   </div>
 
   <script src="https://code.jquery.com/jquery-3.1.0.js"></script>
   <script src="js/vendor/moment.js"></script>
+  <script src="js/trafikMeddelanden.js"></script>
   <script src="js/vt.js"></script>
   <script>
-    const getUrl = (url) => `${document.location.protocol}//api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(url)}`;
-    const urlSthlm = "http://api.sr.se/api/rss/pod/10326";
-    const urlGbg = "http://api.sr.se/api/rss/pod/18748";
-    $.ajax({
-      url: getUrl(urlGbg),
-      dataType: 'json',
-      success(data) {
-        console.log('Trafikmeddelanden hämtade', data.items[0]);
-        $('#trafiken h3').text(data.items[0].title);
-        $('#audio').attr('src', data.items[0].link);
-     }
-  });
-
     Vue.component('location-input', {
       props: {
         label: String,
