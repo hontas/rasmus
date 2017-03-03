@@ -24,10 +24,20 @@
     <trips-list :trips="trips"></trips-list>
   </div>
 
-  <div id="trafiken">
-    <h3></h3>
-    <audio id="audio" controls autoplay="true" />
-  </div>
+  <ul class="trafik-info">
+    <li>
+      <div id="trafiken" class="trafiken-gbg">
+        <h3></h3>
+        <audio controls autoplay="true" />
+      </div>
+    </li>
+    <li>
+      <div id="trafiken" class="trafiken-sthlm">
+        <h3></h3>
+        <audio controls autoplay="true" />
+      </div>
+    </li>
+  </ul>
 
   <script src="https://code.jquery.com/jquery-3.1.0.js"></script>
   <script src="js/vendor/moment.js"></script>

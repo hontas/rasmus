@@ -2,26 +2,33 @@
   const getUrl = (url) => `${document.location.protocol}//api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(url)}`;
   const urlSthlm = "http://api.sr.se/api/rss/pod/10326";
   const urlGbg = "http://api.sr.se/api/rss/pod/18748";
-  var lastPubDate;
+  var lastPubDates = {};
 
-  function success(data) {
+  function render(data, selector) {
     const item = data.items[0];
 
-    if (lastPubDate === item.pubDate) return;
-    lastPubDate = item.pubDate;
+    if (lastPubDates[selector] === item.pubDate) return;
+    lastPubDates[selector] = item.pubDate;
 
     console.log('Trafikmeddelanden hämtade', item);
-    $('#trafiken h3').text(item.title);
-    $('#audio').attr('src', item.link);
+    $(`${selector} h3`).text(item.title);
+    $(`${selector} audio`).attr('src', item.link);
+  }
+
+  function getJson(url, selector) {
+    $.ajax({
+      url: getUrl(url),
+      dataType: 'json',
+      success(data) {
+        render(data, selector);
+      }
+    });
   }
 
   function pollForMessages() {
     console.log('fetching messages...');
-    $.ajax({
-      url: getUrl(urlSthlm),
-      dataType: 'json',
-      success
-    });
+    getJson(urlGbg, '.trafiken-gbg');
+    getJson(urlSthlm, '.trafiken-sthlm');
   }
 
   pollForMessages();

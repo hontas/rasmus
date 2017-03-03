@@ -15,14 +15,19 @@ body {
   color: var(--brand-color);
 }
 
-#app,
-#trafiken {
+#app {
   display: inline-block;
   margin-right: 1em;
   min-width: 500px;
 }
 
 #trafiken {
+  min-width: 500px;
+}
+
+.trafik-info {
+  list-style: none;
+  display: inline-block;
   vertical-align: top;
 }
 
