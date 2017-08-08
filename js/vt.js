@@ -21,6 +21,12 @@ var VT = (function() {
       .then((json) => asArray(json.LocationList.StopLocation));
   }
 
+  function getDepartures(id) {
+    const requestUrl = `${baseUrl}/departureBoard?id=${encodeURIComponent(id)}`;
+    return anropaVasttrafik(requestUrl)
+      .then((json) => asArray(json.DepartureBoard.Departure));
+  }
+
   function anropaVasttrafik(url) {
     const headers = {
       Authorization: `Bearer ${authToken}`
@@ -107,7 +113,8 @@ var VT = (function() {
     getAccessToken,
     getClosestStop,
     getLocationSuggestions,
-    getTripSuggestion
+    getTripSuggestion,
+    getDepartures
   };
 
 }());

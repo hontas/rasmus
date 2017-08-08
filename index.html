@@ -12,7 +12,7 @@
 
   <div id="app">
     <h1>
-      Sök resa (beta)
+      Sök resa
       <i class="fa" :class="{ 'fa-spin':  !initialized, 'fa-spinner': !initialized }"></i>
     </h1>
     <location-input label="Från" :disabled="!initialized" @set-location="setFrom"></location-input>
@@ -24,7 +24,16 @@
     <trips-list :trips="trips"></trips-list>
   </div>
 
-  <ul class="trafik-info">
+  <div id="station-info">
+    <h1>
+      Visa avgångar
+      <i class="fa" :class="{ 'fa-spin':  !initialized, 'fa-spinner': !initialized }"></i>
+    </h1>
+    <location-input :disabled="!initialized" @set-location="setFrom"></location-input>
+    <destination-board v-show="show" :trips="trips"></destination-board>
+  </div>
+
+  <!-- <ul class="trafik-info">
     <li>
       <div id="trafiken" class="trafiken-gbg">
         <h3></h3>
@@ -37,13 +46,43 @@
         <audio controls autoplay="true" />
       </div>
     </li>
-  </ul>
+  </ul> -->
 
   <script src="https://code.jquery.com/jquery-3.1.0.js"></script>
   <script src="js/vendor/moment.js"></script>
-  <script src="js/trafikMeddelanden.js"></script>
+  <!-- <script src="js/trafikMeddelanden.js"></script> -->
   <script src="js/vt.js"></script>
   <script>
+    Vue.component('destination-board', {
+      props: {
+        trips: Array
+      },
+      template: `
+        <table class="destination-board">
+          <thead>
+            <tr>
+              <th>Till</th>
+              <th>Tid</th>
+              <th>Spår/Läge</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="trip in trips" :key="trip.id">
+              <td class="trip-dest">{{ trip.direction }}</td>
+              <td class="trip-time">{{ trip.time }}</td>
+              <td class="trip-track">{{ trip.track }}</td>
+            </tr>
+          </ul>
+          </tbody>
+          <tfoot>
+            <tr>
+              <td colspan="3"></td>
+            </tr>
+          </tfoot>
+        </div>
+      `
+    });
+
     Vue.component('location-input', {
       props: {
         label: String,
@@ -105,6 +144,7 @@
       },
       template: `
         <div class="location-input"
+          :class="{ 'with-label': label }"
           @focus="showDropDown"
           @keyup.esc="hideDropDown">
 
@@ -192,6 +232,41 @@
               this.trips = trips;
               this.isLoading = false;
               console.log(trips);
+            });
+        }
+      }
+    });
+
+    new Vue({
+      el: '#station-info',
+      data: {
+        from: null,
+        isLoading: false,
+        initialized: false,
+        trips: []
+      },
+      computed: {
+        show() {
+          return !!this.trips.length;
+        }
+      },
+      created() {
+        const positionPromise = getPosition();
+        VT.getAccessToken()
+          .then(() => this.initialized = true)
+          .then(() => positionPromise)
+          .then((position) => VT.getClosestStop(position.coords.latitude, position.coords.longitude))
+          .then((loc) => console.log(loc));
+      },
+      methods: {
+        setFrom(location) {
+          this.locaton = location;
+          this.trips = [];
+          this.isLoading = true;
+          VT.getDepartures(location.id)
+            .then((resp) => {
+              console.log(resp);
+              this.trips = resp;
             });
         }
       }

@@ -13,12 +13,13 @@ html {
 body {
   font-family: Helvetica Neue, sans-serif;
   color: var(--brand-color);
+  display: flex;
 }
 
 #app {
   display: inline-block;
   margin-right: 1em;
-  min-width: 500px;
+  min-width: 400px;
 }
 
 #trafiken {
@@ -58,6 +59,7 @@ body {
 
 .location-input {
   --left-offset: 60px;
+  --min-width: 220px;
   position: relative;
   line-height: 1.5em;
   margin-bottom: 0.5em;
@@ -69,9 +71,12 @@ body {
 
 .location-input input {
   border: 1px solid whitesmoke;
-  min-width: 220px;
+  min-width: var(--min-width);
   padding: 0.5em;
   position: absolute;
+  left: 0;
+}
+.location-input.with-label input {
   left: var(--left-offset);
 }
 .location-input input:focus {
@@ -83,11 +88,15 @@ body {
   background: var(--brand-color);
   font-size: small;
   list-style: none;
+  min-width: var(--min-width);
   padding: 0;
   position: absolute;
   top: 1.5em;
-  left: var(--left-offset);
+  left: 0;
   z-index: 10;
+}
+.location-input.with-label .location-input__suggestions {
+  left: var(--left-offset);
 }
 .location-input .location-input__suggestions li:first-child:before {
   --arrow-size: 5px;
@@ -129,6 +138,43 @@ body {
 
 .trip__dest {
   line-height: 1.5em;
+}
+
+.destination-board {
+  border: 0;
+  border-collapse: collapse;
+}
+
+.destination-board thead {
+  background: #f0f0f0;
+  color: #505050;
+}
+
+.destination-board th {
+  font-weight: normal;
+  text-align: left;
+}
+
+.destination-board tbody tr {
+  background: #212830;
+  color: #eadb87;
+}
+
+.destination-board tbody tr:nth-child(even) {
+  background: #4f6e9f;
+}
+
+.destination-board td,
+.destination-board th {
+  padding: .5em;
+}
+
+.destination-board .trip-dest {
+  font-weight: 500;
+}
+.destination-board .trip-time {}
+.destination-board .trip-track {
+  text-align: center;
 }
 
 .BUS:before {
