@@ -15,7 +15,7 @@
       Sök resa
       <i class="fa" :class="{ 'fa-spin':  !initialized, 'fa-spinner': !initialized }"></i>
     </h1>
-    <location-input label="Från" :disabled="!initialized" @set-location="setFrom"></location-input>
+    <location-input suggest-location label="Från" :disabled="!initialized" @set-location="setFrom"></location-input>
     <location-input label="Till" :disabled="!initialized" @set-location="setDest"></location-input>
     <button class="btn" @click="findTrip" :disabled="!from || !dest">
       Sök
@@ -29,7 +29,7 @@
       Visa avgångar
       <i class="fa" :class="{ 'fa-spin':  !initialized, 'fa-spinner': !initialized }"></i>
     </h1>
-    <location-input :disabled="!initialized" @set-location="setFrom"></location-input>
+    <location-input suggest-location :disabled="!initialized" @set-location="setFrom"></location-input>
     <destination-board v-show="show" :trips="trips"></destination-board>
   </div>
 
@@ -53,9 +53,18 @@
   <!-- <script src="js/trafikMeddelanden.js"></script> -->
   <script src="js/vt.js"></script>
   <script>
+    const positionPromise = getPosition();
+
     Vue.component('destination-board', {
       props: {
         trips: Array
+      },
+      methods: {
+        getJurneyDetails(trip) {
+          fetch(trip.href)
+            .then((resp) => resp.json())
+            .then((json) => console.log(json));
+        }
       },
       template: `
         <table class="destination-board">
@@ -63,13 +72,15 @@
             <tr>
               <th>Till</th>
               <th>Tid</th>
+              <th>Linje</th>
               <th>Spår/Läge</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="trip in trips" :key="trip.id">
+            <tr v-for="trip in trips" :key="trip.id" @click.prevent="getJurneyDetails(trip)">
               <td class="trip-dest">{{ trip.direction }}</td>
               <td class="trip-time">{{ trip.time }}</td>
+              <td class="trip-line">{{ trip.name }}</td>
               <td class="trip-track">{{ trip.track }}</td>
             </tr>
           </ul>
@@ -86,7 +97,11 @@
     Vue.component('location-input', {
       props: {
         label: String,
-        disabled: Boolean
+        disabled: Boolean,
+        suggestLocation: {
+          default: false,
+          type: Boolean
+        }
       },
       data() {
         return {
@@ -97,10 +112,22 @@
       },
       created() {
         this.getSuggestions = debounce(this.getSuggestions, 350, this);
+        if (this.suggestLocation) this.suggestPosition();
       },
       methods: {
         onInput(event) {
           this.getSuggestions(event);
+        },
+        suggestPosition() {
+          Promise.resolve(positionPromise)
+            .then((position) => VT.getClosestStop(position.coords.latitude, position.coords.longitude))
+            .then((location) => {
+              if (location) {
+                this.onSelect(location);
+              } else {
+                console.log('No stop found');
+              }
+            });
         },
         onSelect(suggestion) {
           this.location = suggestion;
@@ -212,11 +239,8 @@
         initialized: false
       },
       created() {
-        const positionPromise = getPosition();
         VT.getAccessToken()
-          .then(() => this.initialized = true)
-          .then(() => positionPromise)
-          .then((position) => VT.getClosestStop(position.coords.latitude, position.coords.longitude));
+          .then(() => this.initialized = true);
       },
       methods: {
         setFrom(location) {
@@ -231,7 +255,7 @@
             .then((trips) => {
               this.trips = trips;
               this.isLoading = false;
-              console.log(trips);
+              console.log('trips', trips);
             });
         }
       }
@@ -251,12 +275,8 @@
         }
       },
       created() {
-        const positionPromise = getPosition();
         VT.getAccessToken()
-          .then(() => this.initialized = true)
-          .then(() => positionPromise)
-          .then((position) => VT.getClosestStop(position.coords.latitude, position.coords.longitude))
-          .then((loc) => console.log(loc));
+          .then(() => this.initialized = true);
       },
       methods: {
         setFrom(location) {
@@ -265,8 +285,11 @@
           this.isLoading = true;
           VT.getDepartures(location.id)
             .then((resp) => {
-              console.log(resp);
-              this.trips = resp;
+              this.trips = resp.map((trip) => Object.assign({}, trip, {
+                time: trip.rtTime || trip.time,
+                name: trip.sname || trip.name,
+                href: trip.JourneyDetailRef.ref
+              }));
             });
         }
       }

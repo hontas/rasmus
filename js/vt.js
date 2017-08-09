@@ -71,12 +71,10 @@ var VT = (function() {
     const url = `${baseUrl}/location.nearbystops?originCoordLat=${lat}&originCoordLong=${long}&maxNo=1`;
     anropaVasttrafik(url)
       .then((json) => {
-        if (json.LocationList.StopLocation) {
-          console.log(json.LocationList.StopLocation);
-          $fran.prop("value", json.LocationList.StopLocation.id);
-          $fran.parent().find('.label').prop('value', json.LocationList.StopLocation.name);
+        if (json.LocationList.errorText) {
+          throw new Error(json.LocationList.errorText);
         } else {
-          console.log('No nearby stop found in Västra Götalandsregionen');
+          return json.LocationList.StopLocation || {};
         }
       });
   }
