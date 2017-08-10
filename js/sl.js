@@ -23,6 +23,12 @@ var SL = (function() {
       .then((response) => response.json());
   }
 
+  function realTimeInfo(siteId) {
+    const key = 'a312919085a9447d839109b9a6880d20';
+    const url = `http://api.sl.se/api2/realtimedeparturesV4.<FORMAT>?key=${key}&siteid=${siteId}&timewindow=30&format=json`;
+    return makeRequest(url);
+  }
+
   return {
     closestStop
   };

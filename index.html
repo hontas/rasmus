@@ -52,6 +52,7 @@
   <script src="js/vendor/moment.js"></script>
   <!-- <script src="js/trafikMeddelanden.js"></script> -->
   <script src="js/vt.js"></script>
+  <script src="js/sl.js"></script>
   <script>
     const positionPromise = getPosition();
 
@@ -79,7 +80,7 @@
           <tbody>
             <tr v-for="trip in trips" :key="trip.id" @click.prevent="getJurneyDetails(trip)">
               <td class="trip-dest">{{ trip.direction }}</td>
-              <td class="trip-time">{{ trip.time }}</td>
+              <td class="trip-time" :class="{ 'is-late': trip.isLate }">{{ trip.time }}</td>
               <td class="trip-line">{{ trip.name }}</td>
               <td class="trip-track">{{ trip.track }}</td>
             </tr>
@@ -285,11 +286,17 @@
           this.isLoading = true;
           VT.getDepartures(location.id)
             .then((resp) => {
-              this.trips = resp.map((trip) => Object.assign({}, trip, {
-                time: trip.rtTime || trip.time,
-                name: trip.sname || trip.name,
-                href: trip.JourneyDetailRef.ref
-              }));
+              this.trips = resp
+                .map((trip) => {
+                  const isLate = trip.rtTime && trip.rtTime !== trip.time;
+                  return Object.assign({}, trip, {
+                    time: trip.rtTime || trip.time,
+                    name: trip.sname || trip.name,
+                    href: trip.JourneyDetailRef.ref,
+                    isLate
+                  });
+                });
+              this.isLoading = true;
             });
         }
       }
