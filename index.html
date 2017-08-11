@@ -7,30 +7,43 @@
   <link rel="stylesheet" type="text/css" href="css/style.css">
   <title>Västtrafik reseplanerare</title>
   <script type="text/javascript" src="js/vendor/vue.js"></script>
+
+  <script type="text/x-template" id="search-trip">
+    <div class="search-trip">
+      <div class="form">
+        <i class="fa" :class="{ 'fa-spin':  !initialized, 'fa-spinner': !initialized }"></i>
+        <location-input label="Från" :disabled="!initialized" @set-location="setFrom"></location-input>
+        <location-input label="Till" :disabled="!initialized" @set-location="setDest"></location-input>
+        <button class="btn" @click="findTrip" :disabled="!from || !dest">
+          Sök
+          <i class="fa fa-spin" :class="{ 'fa-spinner': isLoading }" aria-hidden="true"></i>
+        </button>
+      </div>
+      <trips-list :trips="trips"></trips-list>
+    </div>
+  </script>
+
+  <script type="text/x-template" id="station-info">
+    <div class="station-info">
+      <div class="form">
+        <i class="fa" :class="{ 'fa-spin':  !initialized, 'fa-spinner': !initialized }"></i>
+        <location-input :disabled="!initialized" @set-location="setFrom"></location-input>
+      </div>
+      <destination-board v-show="show" :trips="trips"></destination-board>
+    </div>
+  </script>
 </head>
 <body>
 
   <div id="app">
-    <h1>
-      Sök resa
-      <i class="fa" :class="{ 'fa-spin':  !initialized, 'fa-spinner': !initialized }"></i>
-    </h1>
-    <location-input suggest-location label="Från" :disabled="!initialized" @set-location="setFrom"></location-input>
-    <location-input label="Till" :disabled="!initialized" @set-location="setDest"></location-input>
-    <button class="btn" @click="findTrip" :disabled="!from || !dest">
-      Sök
-      <i class="fa fa-spin" :class="{ 'fa-spinner': isLoading }" aria-hidden="true"></i>
-    </button>
-    <trips-list :trips="trips"></trips-list>
-  </div>
-
-  <div id="station-info">
-    <h1>
-      Visa avgångar
-      <i class="fa" :class="{ 'fa-spin':  !initialized, 'fa-spinner': !initialized }"></i>
-    </h1>
-    <location-input suggest-location :disabled="!initialized" @set-location="setFrom"></location-input>
-    <destination-board v-show="show" :trips="trips"></destination-board>
+    <ul class="tabs">
+      <li class="tab" :class="{ active: (tab === 1) }" @click="changeTab(1)">Sök resa</li>
+      <li class="tab" :class="{ active: (tab === 2) }" @click="changeTab(2)">Visa avgångar</li>
+    </ul>
+    <div class="container">
+      <search-trip v-if="tab === 1"></search-trip>
+      <station-info v-if="tab === 2"></station-info>
+    </div>
   </div>
 
   <!-- <ul class="trafik-info">
@@ -98,11 +111,7 @@
     Vue.component('location-input', {
       props: {
         label: String,
-        disabled: Boolean,
-        suggestLocation: {
-          default: false,
-          type: Boolean
-        }
+        disabled: Boolean
       },
       data() {
         return {
@@ -113,27 +122,29 @@
       },
       created() {
         this.getSuggestions = debounce(this.getSuggestions, 350, this);
-        if (this.suggestLocation) this.suggestPosition();
       },
       methods: {
         onInput(event) {
           this.getSuggestions(event);
         },
-        suggestPosition() {
+        findNearestStop() {
           Promise.resolve(positionPromise)
-            .then((position) => VT.getClosestStop(position.coords.latitude, position.coords.longitude))
-            .then((location) => {
-              if (location) {
-                this.onSelect(location);
-              } else {
-                console.log('No stop found');
-              }
+            .then(({ coords: { latitude, longitude }}) => Promise.all([
+              VT.getClosestStop(latitude, longitude),
+              SL.getClosestStop(latitude, longitude)
+            ]))
+            .then(([vtLocation, slLocation]) => {
+              if (vtLocation) this.onSelect(vtLocation);
+              if (slLocation) this.onSelect(slLocation);
+            })
+            .then(() => {
+              this.show = false;
             });
         },
         onSelect(suggestion) {
           this.location = suggestion;
           this.$emit('set-location', suggestion);
-          this.suggestions = [];
+          this.show = false;
         },
         selectFirstSuggestion() {
           if (this.suggestions.length === 0) return;
@@ -155,10 +166,13 @@
             next.querySelector('a').focus();
           }
         },
-        getSuggestions(event) {
-          VT.getLocationSuggestions(event.target.value)
-            .then((stops) => {
-              this.suggestions = stops.slice(0, 5);
+        getSuggestions({ target: { value }}) {
+          Promise.all([
+              SL.findStops(value),
+              VT.findStops(value)
+            ])
+            .then(([slStops, vtStops]) => {
+              this.suggestions = [].concat(slStops, vtStops);
               this.showDropDown();
             });
         },
@@ -183,11 +197,18 @@
               @focus="showDropDown"
               @keyup.enter="selectFirstSuggestion"
               @keyup="handleKeyInput"
+              type="search"
               placeholder="Ange station"
               :disabled="disabled">
 
           </label>
           <ul v-show="show" class="location-input__suggestions">
+            <li @keyup="handleKeyInput">
+              <a href="#" @click.prevent="findNearestStop" @keyup.space="findNearestStop">
+                <i class="fa fa-location-arrow"></i>
+                Använd min plats
+              </a>
+            </li>
             <li v-for="suggestion in suggestions" :key="suggestion.id" @keyup="handleKeyInput">
               <a href="#" @click.prevent="onSelect(suggestion)" @keyup.space="onSelect(suggestion)">{{ suggestion.name }}</a>
             </li>
@@ -230,17 +251,19 @@
       `
     });
 
-    new Vue({
-      el: '#app',
-      data: {
-        from: null,
-        dest: null,
-        isLoading: false,
-        trips: [],
-        initialized: false
+    Vue.component('search-trip', {
+      template: '#search-trip',
+      data() {
+        return {
+          from: null,
+          dest: null,
+          isLoading: false,
+          trips: [],
+          initialized: false
+        };
       },
       created() {
-        VT.getAccessToken()
+        VT.init()
           .then(() => this.initialized = true);
       },
       methods: {
@@ -262,13 +285,15 @@
       }
     });
 
-    new Vue({
-      el: '#station-info',
-      data: {
-        from: null,
-        isLoading: false,
-        initialized: false,
-        trips: []
+    Vue.component('station-info', {
+      template: '#station-info',
+      data() {
+        return {
+          from: null,
+          isLoading: false,
+          initialized: false,
+          trips: []
+        };
       },
       computed: {
         show() {
@@ -276,7 +301,7 @@
         }
       },
       created() {
-        VT.getAccessToken()
+        VT.init()
           .then(() => this.initialized = true);
       },
       methods: {
@@ -284,20 +309,21 @@
           this.locaton = location;
           this.trips = [];
           this.isLoading = true;
-          VT.getDepartures(location.id)
+          window[location.region].getDeparturesFrom(location.id)
             .then((resp) => {
               this.trips = resp
-                .map((trip) => {
-                  const isLate = trip.rtTime && trip.rtTime !== trip.time;
-                  return Object.assign({}, trip, {
-                    time: trip.rtTime || trip.time,
-                    name: trip.sname || trip.name,
-                    href: trip.JourneyDetailRef.ref,
-                    isLate
-                  });
-                });
               this.isLoading = true;
             });
+        }
+      }
+    });
+
+    new Vue({
+      el: '#app',
+      data: { tab: 1 },
+      methods: {
+        changeTab(tab) {
+          this.tab = tab;
         }
       }
     });

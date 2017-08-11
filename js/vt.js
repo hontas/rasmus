@@ -4,6 +4,7 @@ var VT = (function() {
 
   const baseUrl = "https://api.vasttrafik.se/bin/rest.exe/v2";
   let authToken;
+  let expDate;
 
   function getTripSuggestion(from, dest) {
     const date = moment().format("YYYY-MM-DD");
@@ -15,26 +16,50 @@ var VT = (function() {
       );
   }
 
-  function getLocationSuggestions(text) {
+  function findStops(text) {
     const requestUrl = `${baseUrl}/location.name?input=${encodeURIComponent(text)}`;
     return anropaVasttrafik(requestUrl)
-      .then((json) => asArray(json.LocationList.StopLocation));
+      .then((json) => asArray(json.LocationList.StopLocation).slice(0, 5))
+      .then((stops) => stops.map((stop) => Object.assign({}, stop, {
+        region: 'VT'
+      })));
   }
 
-  function getDepartures(id) {
+  function getDeparturesFrom(id) {
     const requestUrl = `${baseUrl}/departureBoard?id=${encodeURIComponent(id)}`;
     return anropaVasttrafik(requestUrl)
-      .then((json) => asArray(json.DepartureBoard.Departure));
+      .then((json) => asArray(json.DepartureBoard.Departure))
+      .then((trips) => trips.filter((item, pos) => {
+        const similar = trips.find((trip) => (trip.name === item.name && trip.time === item.time))
+        return !similar || trips.indexOf(similar) === pos;
+      }))
+      .then((trips) => {
+        return trips.map((trip) => {
+          const isLate = trip.rtTime && trip.rtTime !== trip.time;
+          return Object.assign({}, trip, {
+            time: trip.rtTime || trip.time,
+            name: trip.sname || trip.name,
+            href: trip.JourneyDetailRef.ref,
+            region: 'VT',
+            isLate
+          });
+        });
+      });
   }
 
   function anropaVasttrafik(url) {
+    const accessTokenPromise = Promise.resolve();
     const headers = {
       Authorization: `Bearer ${authToken}`
     };
 
-    return fetch(`${url}&format=json`, {
-      headers
-    })
+    if (!expDate || expDate.getTime() < Date.now()) {
+      console.log('Need to update authtoken');
+      accessTokenPromise.then(getAccessToken);
+    }
+
+    return accessTokenPromise
+      .then(() => fetch(`${url}&format=json`, { headers }))
       .then(fetchMiddleware);
   }
 
@@ -73,9 +98,12 @@ var VT = (function() {
       .then((json) => {
         if (json.LocationList.errorText) {
           throw new Error(json.LocationList.errorText);
-        } else {
-          return json.LocationList.StopLocation || {};
         }
+
+        const stop = json.LocationList.StopLocation;
+        return Object.assign({}, stop, {
+          region: 'VT'
+        });
       });
   }
 
@@ -91,8 +119,7 @@ var VT = (function() {
       .then(fetchMiddleware)
       .then((resp) => {
         authToken = resp.access_token;
-        console.log(authToken);
-        const expDate = new Date(Date.now() + resp.expires_in * 1000);
+        expDate = new Date(Date.now() + resp.expires_in * 1000);
         console.log(`AuthToken expires ${expDate.toLocaleString()}`);
         return resp.access_token;
       });
@@ -107,12 +134,18 @@ var VT = (function() {
     return arg && [].concat(arg) || [];
   }
 
+  const authTokenPromise = getAccessToken();
+
+  function init() {
+    return authTokenPromise;
+  }
+
   return {
-    getAccessToken,
+    init,
     getClosestStop,
-    getLocationSuggestions,
+    findStops,
     getTripSuggestion,
-    getDepartures
+    getDeparturesFrom
   };
 
 }());

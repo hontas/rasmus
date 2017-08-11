@@ -13,17 +13,12 @@ html {
 body {
   font-family: Helvetica Neue, sans-serif;
   color: var(--brand-color);
-  display: flex;
+  margin: 0;
+  padding: 0;
 }
 
-#app {
-  display: inline-block;
-  margin-right: 1em;
-  min-width: 400px;
-}
-
-#trafiken {
-  min-width: 500px;
+.form {
+  padding: .5em;
 }
 
 .trafik-info {
@@ -36,10 +31,13 @@ body {
   border: none;
   background: var(--brand-color);
   color: white;
+  display: block;
+  font: inherit;
+  font-weight: bold;
   margin-top: 1em;
-  min-width: 100px;
   padding: 0.5em 1em;
   position: relative;
+  width: 100%;
 }
 
 .btn[disabled] {
@@ -59,45 +57,47 @@ body {
 
 .location-input {
   --left-offset: 60px;
-  --min-width: 220px;
   position: relative;
-  line-height: 1.5em;
+  line-height: 2em;
   margin-bottom: 0.5em;
 }
 
 .location-input label {
-  font-size: smaller;
+  display: block;
+  position: relative;
 }
 
 .location-input input {
   border: 1px solid whitesmoke;
-  min-width: var(--min-width);
-  padding: 0.5em;
-  position: absolute;
+  font: inherit;
   left: 0;
-}
-.location-input.with-label input {
-  left: var(--left-offset);
-}
-.location-input input:focus {
-  border: 1px solid gray;
-  outline: none;
+  padding: 0 0.5em;
+  position: absolute;
+  width: 100%;
 }
 
 .location-input .location-input__suggestions {
   background: var(--brand-color);
   font-size: small;
   list-style: none;
-  min-width: var(--min-width);
+  width: 100%;
   padding: 0;
   position: absolute;
   top: 1.5em;
   left: 0;
   z-index: 10;
 }
+
+.location-input.with-label input,
 .location-input.with-label .location-input__suggestions {
   left: var(--left-offset);
+  width: calc(100% - var(--left-offset));
 }
+.location-input input:focus {
+  border: 1px solid gray;
+  outline: none;
+}
+
 .location-input .location-input__suggestions li:first-child:before {
   --arrow-size: 5px;
   border-left: var(--arrow-size) solid transparent;
@@ -143,6 +143,7 @@ body {
 .destination-board {
   border: 0;
   border-collapse: collapse;
+  width: 100%;
 }
 
 .destination-board thead {
@@ -200,4 +201,31 @@ body {
 }
 .FERRY:before {
   content: '⛴';
+}
+
+.tabs {
+  display: flex;
+  justify-content: center;
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+}
+.tab {
+  border: 1px solid gray;
+  border-right: none;
+  color: dimgray;
+  cursor: pointer;
+  flex: 1;
+  text-align: center;
+  padding: .5em 1em;
+}
+.tab:last-child {
+  border: 1px solid gray;
+}
+.tab.active {
+  border: 1px solid var(--brand-color);
+  color: var(--brand-color);
+}
+.tab.active + .tab{
+  border-left: none;
 }
