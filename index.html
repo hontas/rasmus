@@ -12,8 +12,8 @@
     <div class="search-trip">
       <div class="form">
         <i class="fa" :class="{ 'fa-spin':  !initialized, 'fa-spinner': !initialized }"></i>
-        <location-input label="Från" :disabled="!initialized" @set-location="setFrom"></location-input>
-        <location-input label="Till" :disabled="!initialized" @set-location="setDest"></location-input>
+        <location-input label="Från" :parentLoading="isLoading" :disabled="!initialized" @set-location="setFrom"></location-input>
+        <location-input label="Till" :parentLoading="isLoading" :disabled="!initialized" @set-location="setDest"></location-input>
         <button class="btn" @click="findTrip" :disabled="!from || !dest">
           Sök
           <i class="fa fa-spin" :class="{ 'fa-spinner': isLoading }" aria-hidden="true"></i>
@@ -27,7 +27,7 @@
     <div class="station-info">
       <div class="form">
         <i class="fa" :class="{ 'fa-spin':  !initialized, 'fa-spinner': !initialized }"></i>
-        <location-input :disabled="!initialized" @set-location="setFrom"></location-input>
+        <location-input label="Från" :parentLoading="isLoading" :disabled="!initialized" @set-location="setFrom"></location-input>
       </div>
       <destination-board v-show="show" :trips="trips"></destination-board>
     </div>
@@ -111,14 +111,21 @@
     Vue.component('location-input', {
       props: {
         label: String,
-        disabled: Boolean
+        disabled: Boolean,
+        parentLoading: Boolean
       },
       data() {
         return {
           show: false,
+          isFetching: false,
           location: {},
           suggestions: []
         };
+      },
+      computed: {
+        isLoading() {
+          return this.isFetching || this.parentLoading
+        }
       },
       created() {
         this.getSuggestions = debounce(this.getSuggestions, 350, this);
@@ -128,6 +135,7 @@
           this.getSuggestions(event);
         },
         findNearestStop() {
+          this.isFetching = true;
           Promise.resolve(positionPromise)
             .then(({ coords: { latitude, longitude }}) => Promise.all([
               VT.getClosestStop(latitude, longitude),
@@ -136,9 +144,9 @@
             .then(([vtLocation, slLocation]) => {
               if (vtLocation) this.onSelect(vtLocation);
               if (slLocation) this.onSelect(slLocation);
-            })
-            .then(() => {
               this.show = false;
+              this.isFetching = false;
+              this.isLoading = false;
             });
         },
         onSelect(suggestion) {
@@ -200,6 +208,7 @@
               type="search"
               placeholder="Ange station"
               :disabled="disabled">
+            <i class="fa fa-spin" :class="{ 'fa-spinner': isLoading }" aria-hidden="true"></i>
 
           </label>
           <ul v-show="show" class="location-input__suggestions">
@@ -279,7 +288,6 @@
             .then((trips) => {
               this.trips = trips;
               this.isLoading = false;
-              console.log('trips', trips);
             });
         }
       }
@@ -312,7 +320,7 @@
           window[location.region].getDeparturesFrom(location.id)
             .then((resp) => {
               this.trips = resp
-              this.isLoading = true;
+              this.isLoading = false;
             });
         }
       }

@@ -76,6 +76,12 @@ body {
   width: 100%;
 }
 
+.location-input .fa {
+  position: absolute;
+  right: .5em;
+  line-height: 2em;
+}
+
 .location-input .location-input__suggestions {
   background: var(--brand-color);
   font-size: small;
