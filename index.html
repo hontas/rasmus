@@ -36,10 +36,13 @@
 <body>
 
   <div id="app">
-    <ul class="tabs">
-      <li class="tab" :class="{ active: (tab === 1) }" @click="changeTab(1)">Sök resa</li>
-      <li class="tab" :class="{ active: (tab === 2) }" @click="changeTab(2)">Visa avgångar</li>
-    </ul>
+    <div class="top-nav">
+      <ul class="tabs">
+        <li class="tab" :class="{ active: (tab === 1) }" @click="changeTab(1)">Sök resa</li>
+        <li class="tab" :class="{ active: (tab === 2) }" @click="changeTab(2)">Visa avgångar</li>
+      </ul>
+      <digital-clock></digital-clock>
+    </div>
     <div class="container">
       <search-trip v-if="tab === 1"></search-trip>
       <station-info v-if="tab === 2"></station-info>
@@ -68,6 +71,33 @@
   <script src="js/sl.js"></script>
   <script>
     const positionPromise = getPosition();
+
+    Vue.component('digital-clock', {
+      data () {
+        return {
+          hours: '',
+          minutes: '',
+          seconds: '',
+        }
+      },
+      created() {
+        this.updateDateTime();
+        setInterval(this.updateDateTime, 1000);
+      },
+      methods: {
+        updateDateTime () {
+          const now = new Date();
+          this.hours = String(now.getHours()).padStart(2, "0");
+          this.minutes = String(now.getMinutes()).padStart(2, "0");
+          this.seconds = String(now.getSeconds()).padStart(2, "0");
+        }
+      },
+      template: `
+        <div class="digital-clock">
+          {{ hours }}:{{ minutes }}:{{ seconds }}
+        </div>
+      `
+    });
 
     Vue.component('destination-board', {
       props: {
@@ -314,10 +344,17 @@
       },
       methods: {
         setFrom(location) {
-          this.locaton = location;
+          this.location = location;
           this.trips = [];
           this.isLoading = true;
-          window[location.region].getDeparturesFrom(location.id)
+          this.getDepartures();
+
+          // refresh list every 20 seconds
+          this.lastIntervalId && clearInterval(this.lastIntervalId);
+          this.lastIntervalId = setInterval(this.getDepartures, 20000);
+        },
+        getDepartures() {
+          window[this.location.region].getDeparturesFrom(this.location.id)
             .then((resp) => {
               this.trips = resp
               this.isLoading = false;

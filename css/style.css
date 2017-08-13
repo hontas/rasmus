@@ -209,7 +209,23 @@ body {
   content: '⛴';
 }
 
+.top-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.digital-clock {
+  color: gray;
+  font-family: monospace;
+  font-weight: bold;
+  flex: 1;
+  padding: .5em 1em;
+  text-align: right;
+}
+
 .tabs {
+  flex: 2;
   display: flex;
   justify-content: center;
   list-style-type: none;
@@ -230,6 +246,7 @@ body {
 }
 .tab.active {
   border: 1px solid var(--brand-color);
+  border-bottom: none;
   color: var(--brand-color);
 }
 .tab.active + .tab{
