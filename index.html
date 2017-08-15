@@ -12,7 +12,7 @@
     <div class="search-trip">
       <div class="form">
         <i class="fa" :class="{ 'fa-spin':  !initialized, 'fa-spinner': !initialized }"></i>
-        <location-input label="Från" :parentLoading="isLoading" :disabled="!initialized" @set-location="setFrom"></location-input>
+        <location-input displayNearbyStops label="Från" :parentLoading="isLoading" :disabled="!initialized" @set-location="setFrom"></location-input>
         <location-input label="Till" :parentLoading="isLoading" :disabled="!initialized" @set-location="setDest"></location-input>
         <button class="btn" @click="findTrip" :disabled="!from || !dest">
           Sök
@@ -27,7 +27,7 @@
     <div class="station-info">
       <div class="form">
         <i class="fa" :class="{ 'fa-spin':  !initialized, 'fa-spinner': !initialized }"></i>
-        <location-input label="Från" :parentLoading="isLoading" :disabled="!initialized" @set-location="setFrom"></location-input>
+        <location-input displayNearbyStops label="Från" :parentLoading="isLoading" :disabled="!initialized" @set-location="setFrom"></location-input>
       </div>
       <destination-board :trips="trips"></destination-board>
     </div>
@@ -57,7 +57,7 @@
         <li v-if="fetchingNearbyStops" @keyup="handleKeyInput">
           <a href="#" @click.prevent>
             Hämtar närliggande hållplatser
-            <i class="fa fa-location-arrow fa-spin"></i>
+            <i class="fa fa-spinner fa-spin"></i>
           </a>
         </li>
         <li v-if="suggestions.length === 0 && !searchText" v-for="station in nearbyStations" @keyup="handleKeyInput">
@@ -185,13 +185,17 @@
       props: {
         label: String,
         disabled: Boolean,
-        parentLoading: Boolean
+        parentLoading: Boolean,
+        displayNearbyStops: {
+          type: Boolean,
+          default: false
+        }
       },
       data() {
         return {
           show: false,
           isFetching: false,
-          fetchingNearbyStops: true,
+          fetchingNearbyStops: this.displayNearbyStops,
           searchText: "",
           suggestions: [],
           nearbyStations: []
@@ -207,6 +211,7 @@
       },
       created() {
         this.debouncedGetSuggestions = debounce(this.getSuggestions, 350, this);
+        if (!this.displayNearbyStops) return;
         nearbyStationsPromise.then((stations) => {
           this.nearbyStations = stations;
           this.fetchingNearbyStops = false;

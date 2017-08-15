@@ -11,7 +11,10 @@ var TV = (function() {
       if (name) {
         return `
           <FILTER>
-            <LIKE name="AdvertisedLocationName" value="/^${swapÅandÄ(name)}/i" />
+            <AND>
+              <LIKE name="AdvertisedLocationName" value="/^${swapÅandÄ(name)}/i" />
+              <EQ name="Advertised" value="true" />
+            </AND>
           </FILTER>
         `;
       }
@@ -19,7 +22,10 @@ var TV = (function() {
       if (lat && long) {
         return `
           <FILTER>
-            <WITHIN name="Geometry.WGS84" shape="center" value="${long} ${lat}" radius="${radius}m" />
+            <AND>
+              <WITHIN name="Geometry.WGS84" shape="center" value="${long} ${lat}" radius="${radius}m" />
+              <EQ name="Advertised" value="true" />
+            </AND>
           </FILTER>
         `;
       }
