@@ -43,6 +43,7 @@ var TV = (function() {
       return `
         <FILTER>
           <AND>
+            <EQ name="Advertised" value="true" />
             <EQ name="ActivityType" value="Avgang" />
             <EQ name="LocationSignature" value="${station}" />
             <GT name="AdvertisedTimeAtLocation" value="$dateadd(00:00:00)" />
@@ -119,7 +120,7 @@ var TV = (function() {
         .then((deps) => deps.map((dep) => ({
           id: dep.LocationSignature,
           direction: dep.ToLocation && TV.stationMap[dep.ToLocation[0].LocationName] || '',
-          name: `${dep.TypeOfTraffic} ${dep.TechnicalTrainIdent}`,
+          name: `${dep.ProductInformation.join(' ')}`,
           time: dep.AdvertisedTimeAtLocation.substr(-8, 5),
           isLate: false,
           track: dep.TrackAtLocation
