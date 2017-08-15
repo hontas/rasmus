@@ -62,6 +62,27 @@ body {
   margin-bottom: 0.5em;
 }
 
+.location-input .nearby-stations {
+  list-style-type: none;
+  padding: 0;
+}
+
+.location-input.with-label .nearby-stations {
+  margin: 0 0 0 var(--left-offset);
+  font-size: small;
+}
+
+.location-input .nearby-stations li { display: inline-block; }
+.location-input .nearby-stations .nearby-station {
+  background: var(--brand-color);
+  color: white;
+  display: block;
+  line-height: 1.5em;
+  margin-left: 5px;
+  padding: 0 .5em;
+  text-decoration: none;
+}
+
 .location-input label {
   display: block;
   position: relative;

@@ -30,6 +30,7 @@
         <location-input label="Från" :parentLoading="isLoading" :disabled="!initialized" @set-location="setFrom"></location-input>
       </div>
       <destination-board v-show="show" :trips="trips"></destination-board>
+      <p v-show="!show">Inga resor att visa</p>
     </div>
   </script>
 </head>
@@ -69,8 +70,11 @@
   <!-- <script src="js/trafikMeddelanden.js"></script> -->
   <script src="js/vt.js"></script>
   <script src="js/sl.js"></script>
+  <script src="js/tv.js"></script>
   <script>
     const positionPromise = getPosition();
+    const nearbyStationsPromise = positionPromise
+      .then(({ coords: { latitude, longitude }}) => TV.getClosestStops(latitude, longitude));
 
     Vue.component('digital-clock', {
       data () {
@@ -129,11 +133,6 @@
             </tr>
           </ul>
           </tbody>
-          <tfoot>
-            <tr>
-              <td colspan="3"></td>
-            </tr>
-          </tfoot>
         </div>
       `
     });
@@ -149,7 +148,8 @@
           show: false,
           isFetching: false,
           location: {},
-          suggestions: []
+          suggestions: [],
+          nearbyStations: []
         };
       },
       computed: {
@@ -159,6 +159,9 @@
       },
       created() {
         this.getSuggestions = debounce(this.getSuggestions, 350, this);
+        nearbyStationsPromise.then((stations) => {
+          this.nearbyStations = stations;
+        })
       },
       methods: {
         onInput(event) {
@@ -167,13 +170,9 @@
         findNearestStop() {
           this.isFetching = true;
           Promise.resolve(positionPromise)
-            .then(({ coords: { latitude, longitude }}) => Promise.all([
-              VT.getClosestStop(latitude, longitude),
-              SL.getClosestStop(latitude, longitude)
-            ]))
-            .then(([vtLocation, slLocation]) => {
-              if (vtLocation) this.onSelect(vtLocation);
-              if (slLocation) this.onSelect(slLocation);
+            .then(({ coords: { latitude, longitude }}) => TV.getClosestStop(latitude, longitude))
+            .then((location) => {
+              if (location) this.onSelect(location);
               this.show = false;
               this.isFetching = false;
               this.isLoading = false;
@@ -227,6 +226,12 @@
           :class="{ 'with-label': label }"
           @focus="showDropDown"
           @keyup.esc="hideDropDown">
+
+          <ul class="nearby-stations">
+            <li v-for="station in nearbyStations">
+              <a href="#" @click="onSelect(station)" class="nearby-station">{{ station.name }}</a>
+            </li>
+          </ul>
 
           <label>
             {{label}}:
