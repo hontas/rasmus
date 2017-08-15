@@ -99,8 +99,12 @@ body {
 
 .location-input .fa {
   position: absolute;
-  right: .5em;
-  line-height: 2em;
+  line-height: 2.2em;
+  right: 1.7em;
+}
+.location-input .location-input__suggestions .fa {
+  position: initial;
+  margin-left: 1em;
 }
 
 .location-input .location-input__suggestions {
@@ -173,9 +177,13 @@ body {
   width: 100%;
 }
 
-.destination-board thead {
+.destination-board thead,
+.destination-board tfoot {
   background: #f0f0f0;
   color: #505050;
+}
+.destination-board tfoot {
+  border-top: 1px solid #CCC;
 }
 
 .destination-board th {
@@ -232,22 +240,25 @@ body {
 
 .top-nav {
   display: flex;
-  align-items: center;
   justify-content: space-between;
 }
 
 .digital-clock {
+  background: lightgray;
+  border-bottom: 1px solid gray;
   color: gray;
   font-family: monospace;
+  font-size: 1.2em;
   font-weight: bold;
   flex: 1;
   padding: .5em 1em;
   text-align: right;
+  text-shadow: 1px 1px 0 #AAA, -1px -1px 0 #DDD;
 }
 
 .tabs {
-  flex: 2;
   display: flex;
+  flex: 2;
   justify-content: center;
   list-style-type: none;
   margin: 0;

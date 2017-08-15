@@ -4,7 +4,7 @@ var SL = (function() {
     method: 'GET'
   }
 
-  function getClosestStop(lat, long) {
+  function getClosestStop({ lat, long }) {
     const key = 'bf8e1f49392843a19e86ef1ccbaa15a0';
     const url = `nearbystops.json?key=${key}&originCoordLat=${lat}&originCoordLong=${long}&maxresults=1`;
     return makeRequest(url)

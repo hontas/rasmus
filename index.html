@@ -29,8 +29,47 @@
         <i class="fa" :class="{ 'fa-spin':  !initialized, 'fa-spinner': !initialized }"></i>
         <location-input label="Från" :parentLoading="isLoading" :disabled="!initialized" @set-location="setFrom"></location-input>
       </div>
-      <destination-board v-show="show" :trips="trips"></destination-board>
-      <p v-show="!show">Inga resor att visa</p>
+      <destination-board :trips="trips"></destination-board>
+    </div>
+  </script>
+
+  <script type="text/x-template" id="location-input">
+    <div class="location-input"
+      :class="{ 'with-label': label }"
+      @focus="showDropDown"
+      @keyup.esc="hideDropDown">
+
+      <label>
+        {{label}}:
+        <input v-model="searchText"
+          @input="onInput"
+          @focus="showDropDown"
+          @blur="possiblyHideDropDown"
+          @keyup.enter="selectFirstSuggestion"
+          @keyup="handleKeyInput"
+          type="search"
+          placeholder="Ange station"
+          :disabled="disabled">
+        <i class="fa fa-spin" :class="{ 'fa-spinner': isLoading }" aria-hidden="true"></i>
+      </label>
+
+      <ul v-show="show" class="location-input__suggestions">
+        <li v-if="fetchingNearbyStops" @keyup="handleKeyInput">
+          <a href="#" @click.prevent>
+            Hämtar närliggande hållplatser
+            <i class="fa fa-location-arrow fa-spin"></i>
+          </a>
+        </li>
+        <li v-if="suggestions.length === 0 && !searchText" v-for="station in nearbyStations" @keyup="handleKeyInput">
+          <a href="#" @click.prevent="onSelect(station)" @keyup.space="onSelect(station)">{{ station.name }}</a>
+        </li>
+        <li v-if="suggestions.length === 0 && searchText">
+          <a href="#" @click.prevent>Inga resultat för söktermen</a>
+        </li>
+        <li v-for="suggestion in suggestions" :key="suggestion.id" @keyup="handleKeyInput">
+          <a href="#" @click.prevent="onSelect(suggestion)" @keyup.space="onSelect(suggestion)">{{ suggestion.name }}</a>
+        </li>
+      </ul>
     </div>
   </script>
 </head>
@@ -40,7 +79,7 @@
     <div class="top-nav">
       <ul class="tabs">
         <li class="tab" :class="{ active: (tab === 1) }" @click="changeTab(1)">Sök resa</li>
-        <li class="tab" :class="{ active: (tab === 2) }" @click="changeTab(2)">Visa avgångar</li>
+        <li class="tab" :class="{ active: (tab === 2) }" @click="changeTab(2)">Visa avgångar (trafikverket)</li>
       </ul>
       <digital-clock></digital-clock>
     </div>
@@ -72,9 +111,10 @@
   <script src="js/sl.js"></script>
   <script src="js/tv.js"></script>
   <script>
-    const positionPromise = getPosition();
+    const positionPromise = getPosition()
+      .then(({ coords: { latitude: lat, longitude: long }}) => ({ lat, long }));
     const nearbyStationsPromise = positionPromise
-      .then(({ coords: { latitude, longitude }}) => TV.getClosestStops(latitude, longitude));
+      .then(TV.getClosestStops);
 
     Vue.component('digital-clock', {
       data () {
@@ -131,8 +171,12 @@
               <td class="trip-line">{{ trip.name }}</td>
               <td class="trip-track">{{ trip.track }}</td>
             </tr>
-          </ul>
           </tbody>
+          <tfoot v-show="trips.length === 0">
+            <tr>
+              <td colspan="4">Inga resor att visa</td>
+            </tr>
+          </tfoot>
         </div>
       `
     });
@@ -147,7 +191,8 @@
         return {
           show: false,
           isFetching: false,
-          location: {},
+          fetchingNearbyStops: true,
+          searchText: "",
           suggestions: [],
           nearbyStations: []
         };
@@ -155,22 +200,40 @@
       computed: {
         isLoading() {
           return this.isFetching || this.parentLoading
+        },
+        hasSuggestions() {
+          return this.suggestions.length || this.nearbyStations.length;
         }
       },
       created() {
-        this.getSuggestions = debounce(this.getSuggestions, 350, this);
+        this.debouncedGetSuggestions = debounce(this.getSuggestions, 350, this);
         nearbyStationsPromise.then((stations) => {
           this.nearbyStations = stations;
+          this.fetchingNearbyStops = false;
         })
       },
       methods: {
-        onInput(event) {
-          this.getSuggestions(event);
+        onInput({ target: { value }}) {
+          if (!value) {
+            this.suggestions = [];
+          } else {
+            this.isFetching = true;
+            this.debouncedGetSuggestions(value);
+          }
+        },
+        getSuggestions(value) {
+          return TV.findStops(value)
+            .then((stops) => {
+              this.isFetching = false;
+              this.suggestions = [].concat(stops);
+              this.showDropDown();
+            });
+          return "hello";
         },
         findNearestStop() {
           this.isFetching = true;
           Promise.resolve(positionPromise)
-            .then(({ coords: { latitude, longitude }}) => TV.getClosestStop(latitude, longitude))
+            .then(TV.getClosestStop)
             .then((location) => {
               if (location) this.onSelect(location);
               this.show = false;
@@ -179,9 +242,11 @@
             });
         },
         onSelect(suggestion) {
-          this.location = suggestion;
+          this.searchText = suggestion.name;
           this.$emit('set-location', suggestion);
-          this.show = false;
+          this.hideDropDown();
+          this.getSuggestions(suggestion.name)
+            .then(this.hideDropDown);
         },
         selectFirstSuggestion() {
           if (this.suggestions.length === 0) return;
@@ -195,7 +260,7 @@
 
           const getSibling = (el) => el.parentElement[dict[e.key]];
 
-          if (["ArrowDown", "ArrowUp"].includes(e.key) && this.show && this.suggestions.length) {
+          if (["ArrowDown", "ArrowUp"].includes(e.key) && this.show && this.hasSuggestions) {
             const focused = this.$el.querySelector('.location-input__suggestions a:focus');
             if (!focused) return this.$el.querySelector('.location-input__suggestions a').focus();
             const next = getSibling(focused);
@@ -203,61 +268,19 @@
             next.querySelector('a').focus();
           }
         },
-        getSuggestions({ target: { value }}) {
-          Promise.all([
-              SL.findStops(value),
-              VT.findStops(value)
-            ])
-            .then(([slStops, vtStops]) => {
-              this.suggestions = [].concat(slStops, vtStops);
-              this.showDropDown();
-            });
-        },
         showDropDown() {
           this.show = true;
         },
         hideDropDown() {
           this.show = false;
           document.activeElement.blur();
+        },
+        possiblyHideDropDown(e) {
+          if (e.relatedTarget && this.$el.contains(e.relatedTarget)) return;
+          this.hideDropDown();
         }
       },
-      template: `
-        <div class="location-input"
-          :class="{ 'with-label': label }"
-          @focus="showDropDown"
-          @keyup.esc="hideDropDown">
-
-          <ul class="nearby-stations">
-            <li v-for="station in nearbyStations">
-              <a href="#" @click="onSelect(station)" class="nearby-station">{{ station.name }}</a>
-            </li>
-          </ul>
-
-          <label>
-            {{label}}:
-            <input v-model="location.name"
-              @input="onInput"
-              @focus="showDropDown"
-              @keyup.enter="selectFirstSuggestion"
-              @keyup="handleKeyInput"
-              type="search"
-              placeholder="Ange station"
-              :disabled="disabled">
-            <i class="fa fa-spin" :class="{ 'fa-spinner': isLoading }" aria-hidden="true"></i>
-
-          </label>
-          <ul v-show="show" class="location-input__suggestions">
-            <li @keyup="handleKeyInput">
-              <a href="#" @click.prevent="findNearestStop" @keyup.space="findNearestStop">
-                <i class="fa fa-location-arrow"></i>
-                Använd min plats
-              </a>
-            </li>
-            <li v-for="suggestion in suggestions" :key="suggestion.id" @keyup="handleKeyInput">
-              <a href="#" @click.prevent="onSelect(suggestion)" @keyup.space="onSelect(suggestion)">{{ suggestion.name }}</a>
-            </li>
-          </ul>
-        </div>`
+      template: '#location-input'
     });
 
     Vue.component('trips-list', {

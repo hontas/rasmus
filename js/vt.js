@@ -92,7 +92,7 @@ var VT = (function() {
     return `${timeStr} ${leg.Destination.name}${track}`;
   }
 
-  function getClosestStop(lat, long) {
+  function getClosestStop({ lat, long }) {
     const url = `${baseUrl}/location.nearbystops?originCoordLat=${lat}&originCoordLong=${long}&maxNo=1`;
     anropaVasttrafik(url)
       .then((json) => {
