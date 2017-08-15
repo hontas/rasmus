@@ -208,12 +208,15 @@ body {
 .destination-board .trip-dest {
   font-weight: 500;
 }
-.destination-board .trip-time {}
+.destination-board .trip-time {
+  width: 70px;
+}
 .destination-board .trip-time.is-late {
   color: red;
 }
 .destination-board .trip-track {
   text-align: center;
+  width: 90px;
 }
 
 .BUS:before {
