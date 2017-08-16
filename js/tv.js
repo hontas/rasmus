@@ -59,7 +59,7 @@ var TV = (function() {
   }
 
   function tvApiRequest(objectType, ...args) {
-    return fetch('http://api.trafikinfo.trafikverket.se/v1.2/data.json', {
+    return fetch('https://api.trafikinfo.trafikverket.se/v1.2/data.json', {
       body: `
         <REQUEST>
           ${auth}
