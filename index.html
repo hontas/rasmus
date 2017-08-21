@@ -12,8 +12,8 @@
     <div class="search-trip">
       <div class="form">
         <i class="fa" :class="{ 'fa-spin':  !initialized, 'fa-spinner': !initialized }"></i>
-        <location-input displayNearbyStops label="Från" :parentLoading="isLoading" :disabled="!initialized" @set-location="setFrom"></location-input>
-        <location-input label="Till" :parentLoading="isLoading" :disabled="!initialized" @set-location="setDest"></location-input>
+        <location-input displayNearbyStops locationApi="RR" label="Från" :parentLoading="isLoading" :disabled="!initialized" @set-location="setFrom"></location-input>
+        <location-input locationApi="RR" label="Till" :parentLoading="isLoading" :disabled="!initialized" @set-location="setDest"></location-input>
         <button class="btn" @click="findTrip" :disabled="!from || !dest">
           Sök
           <i class="fa fa-spin" :class="{ 'fa-spinner': isLoading }" aria-hidden="true"></i>
@@ -27,7 +27,7 @@
     <div class="station-info">
       <div class="form">
         <i class="fa" :class="{ 'fa-spin':  !initialized, 'fa-spinner': !initialized }"></i>
-        <location-input displayNearbyStops label="Från" :parentLoading="isLoading" :disabled="!initialized" @set-location="setFrom"></location-input>
+        <location-input locationApi="TV" displayNearbyStops label="Från" :parentLoading="isLoading" :disabled="!initialized" @set-location="setFrom"></location-input>
       </div>
       <destination-board :trips="trips"></destination-board>
     </div>
@@ -63,7 +63,7 @@
         <li v-if="suggestions.length === 0 && !searchText" v-for="station in nearbyStations" @keyup="handleKeyInput">
           <a href="#" @click.prevent="onSelect(station)" @keyup.space="onSelect(station)">{{ station.name }}</a>
         </li>
-        <li v-if="suggestions.length === 0 && searchText">
+        <li v-if="suggestions.length === 0 && searchText && !isFetching">
           <a href="#" @click.prevent>Inga resultat för söktermen</a>
         </li>
         <li v-for="suggestion in suggestions" :key="suggestion.id" @keyup="handleKeyInput">
@@ -110,11 +110,10 @@
   <script src="js/vt.js"></script>
   <script src="js/sl.js"></script>
   <script src="js/tv.js"></script>
+  <script src="js/resrobot.js"></script>
   <script>
     const positionPromise = getPosition()
       .then(({ coords: { latitude: lat, longitude: long }}) => ({ lat, long }));
-    const nearbyStationsPromise = positionPromise
-      .then(TV.getClosestStops);
 
     Vue.component('digital-clock', {
       data () {
@@ -189,6 +188,17 @@
         displayNearbyStops: {
           type: Boolean,
           default: false
+        },
+        locationApi: {
+          type: String,
+          validator(value) {
+            return window[value].hasOwnProperty('findStops') &&
+              window[value].hasOwnProperty('getClosestStop') &&
+              window[value].hasOwnProperty('getClosestStops') &&
+              typeof window[value].findStops === 'function' &&
+              typeof window[value].getClosestStop === 'function' &&
+              typeof window[value].getClosestStops === 'function';
+          }
         }
       },
       data() {
@@ -212,7 +222,9 @@
       created() {
         this.debouncedGetSuggestions = debounce(this.getSuggestions, 350, this);
         if (!this.displayNearbyStops) return;
-        nearbyStationsPromise.then((stations) => {
+        positionPromise
+          .then(window[this.locationApi].getClosestStops)
+          .then((stations) => {
           this.nearbyStations = stations;
           this.fetchingNearbyStops = false;
         })
@@ -227,7 +239,7 @@
           }
         },
         getSuggestions(value) {
-          return TV.findStops(value)
+          return window[this.locationApi].findStops(value)
             .then((stops) => {
               this.isFetching = false;
               this.suggestions = [].concat(stops);
@@ -238,7 +250,7 @@
         findNearestStop() {
           this.isFetching = true;
           Promise.resolve(positionPromise)
-            .then(TV.getClosestStop)
+            .then(window[this.locationApi].getClosestStop)
             .then((location) => {
               if (location) this.onSelect(location);
               this.show = false;
@@ -303,7 +315,7 @@
 
     Vue.component('trips-item', {
       props: {
-        trip: Object
+        trip: Array
       },
       methods: {
         isLast(index, trip) {
@@ -313,10 +325,9 @@
       template: `
         <ul class="trip">
           <li class="trip__leg" :class="leg.type" v-for="(leg, index) in trip">
-            {{ leg.Origin.rtTime || leg.Origin.time }} {{ leg.name }} från {{ leg.Origin.name }} läge {{ leg.Origin.track || '' }}
-            <br/>
+            {{ leg.text }} <br/>
             <span class="trip__dest" v-if="isLast(index, trip)">
-              ⇥ {{ leg.Destination.rtTime || leg.Destination.time }}
+              ⇥ {{ leg.to.time }}
             </span>
           </li>
         </ul>
@@ -344,10 +355,11 @@
         },
         setDest(location) {
           this.dest = location.id;
+          if (this.from) this.findTrip();
         },
         findTrip() {
           this.isLoading = true;
-          VT.getTripSuggestion(this.from, this.dest)
+          RR.getTripSuggestion(this.from, this.dest)
             .then((trips) => {
               this.trips = trips;
               this.isLoading = false;

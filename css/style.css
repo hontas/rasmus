@@ -226,6 +226,7 @@ body {
   content: '🚋';
 }
 
+.JNY:before,
 .REG:before,
 .VAS:before,
 .TRAIN:before {
