@@ -78,7 +78,7 @@
   <div id="app">
     <div class="top-nav">
       <ul class="tabs">
-        <li class="tab" :class="{ active: (tab === 1) }" @click="changeTab(1)">Sök resa</li>
+        <li class="tab" :class="{ active: (tab === 1) }" @click="changeTab(1)">Sök resa (resrobot)</li>
         <li class="tab" :class="{ active: (tab === 2) }" @click="changeTab(2)">Visa avgångar (trafikverket)</li>
       </ul>
       <digital-clock></digital-clock>
@@ -352,6 +352,7 @@
       methods: {
         setFrom(location) {
           this.from = location.id;
+          this.$el.querySelectorAll('input')[1].focus();
         },
         setDest(location) {
           this.dest = location.id;
