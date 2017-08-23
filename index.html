@@ -315,7 +315,7 @@
 
     Vue.component('trips-item', {
       props: {
-        trip: Array
+        trip: Object
       },
       methods: {
         isLast(index, trip) {
@@ -323,14 +323,30 @@
         }
       },
       template: `
-        <ul class="trip">
-          <li class="trip__leg" :class="leg.type" v-for="(leg, index) in trip">
-            {{ leg.text }} <br/>
-            <span class="trip__dest" v-if="isLast(index, trip)">
-              ⇥ {{ leg.to.time }}
-            </span>
-          </li>
-        </ul>
+        <article class="trip">
+          <header>
+            <h1>{{ trip.departs }} » {{ trip.arrives }}</h1>
+            <p class="trip__duration">Restid {{ trip.duration }}</p>
+          </header>
+          <main>
+            <ul class="trip__short-legs">
+              <li class="trip__short-leg" v-for="leg in trip.legs">
+                <span :class="leg.type"></span>
+              </li>
+            </ul>
+            <p>{{ trip.legs.length - 1 }} byte</p>
+          </main>
+          <div class="trip__details" v-show="display-details">
+            <ul class="trip__legs">
+              <li class="trip__leg" :class="leg.type" v-for="(leg, index) in trip.legs">
+                {{ leg.text }} <br/>
+                <span class="trip__dest" v-if="isLast(index, trip)">
+                  ⇥ {{ leg.to.time }}
+                </span>
+              </li>
+            </ul>
+          </div>
+        </article>
       `
     });
 
@@ -352,7 +368,6 @@
       methods: {
         setFrom(location) {
           this.from = location.id;
-          this.$el.querySelectorAll('input')[1].focus();
         },
         setDest(location) {
           this.dest = location.id;

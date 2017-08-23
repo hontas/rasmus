@@ -157,14 +157,45 @@ body {
   outline: none;
 }
 
+.trips {
+  background-color: lightgray;
+  margin: .5em 0;
+  padding-top: .5em;
+}
+
 .trips, .trip {
   list-style: none;
   padding-left: 0;
 }
 
 .trip {
-  margin-left: 0.5em;
-  margin-bottom: 1em;
+  background-color: white;
+  border: 1px solid whitesmoke;
+  margin: .5em;
+  padding: .5em;
+}
+
+.trip header,
+.trip main {
+  display: flex;
+  align-items: center;
+}
+
+.trip header {
+  justify-content: space-between;
+}
+
+.trip h1 {
+  margin: 0;
+}
+
+.trip__short-legs {
+  list-style-type: none;
+  padding-left: 0;
+}
+.trip__short-leg {
+  display: inline-block;
+  margin: 0 .5em;
 }
 
 .trip__dest {

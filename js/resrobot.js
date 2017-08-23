@@ -17,14 +17,15 @@ window.RR = (function resrRobot() {
   }
 
   function getClosestStops({ lat, long }) {
-    return makeRequest(`${baseUrl}/location.nearbystops?originCoordLat=${lat}&originCoordLong=${long}&format=json`)
+    return makeRequest(`${baseUrl}/location.nearbystops?originCoordLat=${lat}&originCoordLong=${long}&maxNo=5&format=json`)
       .then(stopLocationMiddleware);
   }
 
   function getTripSuggestion(from, to) {
+    const getTime = (str) => str.substr(0, 5);
     const getStop = (stop) => ({
       name: stop.name.replace(/ \([^)]*\)/, ''), // remove stuff in parentheses
-      time: (stop.rtTime || stop.time).substr(0, 5), // only keep hours and minutes
+      time: getTime(stop.rtTime || stop.time), // only keep hours and minutes
       track: (stop.track ? `läge ${stop.track}` : ''),
       realTime: !!stop.rtTime,
     });
@@ -45,23 +46,29 @@ window.RR = (function resrRobot() {
       .replace('H', 'h')
       .replace('M', 'min');
 
+    function getLeg({ type, name, Product, Destination, Origin, duration }) {
+      const orig = getStop(Origin);
+      const dest = getStop(Destination);
+      return {
+        type,
+        name: (type === 'WALK' ? 'Gå' : name),
+        from: orig,
+        to: dest,
+        text: (type === 'WALK' ?
+          `${orig.time} Gå till ${dest.name} (${readableTime(duration)})` :
+          `${orig.time} ${catCodes[Product.catCode]} ${Product.num} från ${orig.name} ${orig.track}`),
+      };
+    }
+
     return makeRequest(`${baseUrl}/trip?&originId=${from}&destId=${to}&format=json`)
       .then(logMiddleware)
       .then((json) => json.Trip
-        .map((trip) => trip.LegList.Leg
-          .map(({ type, name, Product, Destination, Origin, duration }) => {
-            const orig = getStop(Origin);
-            const dest = getStop(Destination);
-            return {
-              type,
-              name: (type === 'WALK' ? 'Gå' : name),
-              from: orig,
-              to: dest,
-              text: (type === 'WALK' ?
-                `${orig.time } Gå till ${dest.name} (${readableTime(duration)})` :
-                `${orig.time } ${catCodes[Product.catCode]} ${Product.num} från ${orig.name} ${orig.track}`),
-            };
-          })))
+        .map(({ LegList, duration }) => ({
+          departs: getTime(LegList.Leg[0].Origin.time),
+          arrives: getTime(LegList.Leg[LegList.Leg.length - 1].Destination.time),
+          duration: readableTime(duration),
+          legs: LegList.Leg.map(getLeg),
+        })))
       .then(logMiddleware);
   }
 
