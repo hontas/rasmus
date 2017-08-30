@@ -104,7 +104,7 @@
     </li>
   </ul> -->
 
-  <script src="https://code.jquery.com/jquery-3.1.0.js"></script>
+  <script src="js/vendor/jquery-3.2.1.slim.min.js"></script>
   <script src="js/vendor/moment.js"></script>
   <!-- <script src="js/trafikMeddelanden.js"></script> -->
   <script src="js/vt.js"></script>
@@ -448,6 +448,19 @@
         if (!("geolocation" in navigator)) return reject();
 
         navigator.geolocation.getCurrentPosition(resolve);
+      });
+    }
+  </script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function() {
+        navigator.serviceWorker.register('/sw.js').then(function(registration) {
+          // Registration was successful
+          console.log('ServiceWorker registration successful with scope: ', registration.scope);
+        }, function(err) {
+          // registration failed :(
+          console.log('ServiceWorker registration failed: ', err);
+        });
       });
     }
   </script>
