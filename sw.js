@@ -23,8 +23,10 @@ let urlsToCache = [
   '/js/vt.js'
 ];
 
+const pathName = location.pathname.match(/(\/[^/]+\/([^/]+\/)*)/)[1];
+console.log('pathName', pathName);
 if (location.hostname !== 'localhost') {
-  urlsToCache = urlsToCache.map((str) => str.replace('/', location.pathname));
+  urlsToCache = urlsToCache.map((str) => str.replace('/', pathName));
   console.log(urlsToCache);
 }
 
