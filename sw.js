@@ -32,7 +32,7 @@ self.addEventListener('install', (event) => {
   event.waitUntil((async function aiife() {
     const cache = await caches.open(CACHE_NAME);
     await cache.addAll(urlsToCache);
-    return self.skipWaiting();
+    self.skipWaiting();
   }()));
 });
 
@@ -45,7 +45,7 @@ self.addEventListener('activate', (event) => {
       .filter((cacheName) => !cacheWhitelist.includes(cacheName))
       .map((cacheName) => caches.delete(cacheName));
     await Promise.all(cachesToDelete);
-    return self.clients.claim();
+    self.clients.claim();
   }()));
 });
 
