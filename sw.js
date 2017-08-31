@@ -1,6 +1,11 @@
-const CACHE_NAME = 'rasmus-resa-v1';
+const CACHE_NAME = 'rasmus-resa-v2';
 let urlsToCache = [
   '/',
+  '/favicon.ico',
+  '/manifest.json',
+  '/assets/launcher-icon-1x.png',
+  '/assets/launcher-icon-2x.png',
+  '/assets/launcher-icon-4x.png',
   '/css/style.css',
   '/css/font-awesome.css',
   '/css/fonts/fontawesome-webfont.eot',
@@ -17,47 +22,45 @@ let urlsToCache = [
   '/js/tv.js',
   '/js/vt.js'
 ];
+
+console.log('location.hostname', location.hostname);
 if (location.hostname !== 'localhost') {
   console.log('prefixing url path');
   urlsToCache = urlsToCache.map((str) => `/rasmus${str}`);
 }
 
-
 self.addEventListener('install', (event) => {
-  // Perform install steps
-  event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then((cache) => {
-        console.log('Opened cache');
-        cache.addAll(urlsToCache)
-          .then(self.skipWaiting);
-      })
-  );
+  event.waitUntil((async function aiife() {
+    const cache = await caches.open(CACHE_NAME);
+    await cache.addAll(urlsToCache);
+    return self.skipWaiting();
+  }()));
 });
 
 self.addEventListener('activate', (event) => {
   const cacheWhitelist = [CACHE_NAME];
 
-  event.waitUntil(
-    caches.keys().then((cacheNames) => Promise.all(
-      cacheNames.map((cacheName) => {
-        if (cacheWhitelist.indexOf(cacheName) === -1) {
-          return caches.delete(cacheName);
-        }
-      })
-    ))
-  );
+  event.waitUntil((async function iife() {
+    const cacheNames = await caches.keys();
+    const cachesToDelete = cacheNames
+      .filter((cacheName) => !cacheWhitelist.includes(cacheName))
+      .map((cacheName) => caches.delete(cacheName));
+    await Promise.all(cachesToDelete);
+    return self.clients.claim();
+  }()));
 });
 
 self.addEventListener('fetch', (event) => {
-  event.respondWith(
-    caches.match(event.request)
-      .then((response) => {
-        // Cache hit - return response
-        if (response) {
-          return response;
-        }
-        return fetch(event.request);
-      })
-  );
+  if (event.request.url.startsWith(self.location.origin)) {
+    event.respondWith(
+      caches.match(event.request)
+        .then((response) => {
+          if (response) {
+            return response;
+          }
+
+          return fetch(event.request);
+        })
+    );
+  }
 });
