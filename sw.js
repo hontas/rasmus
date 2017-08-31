@@ -1,4 +1,4 @@
-const CACHE_NAME = 'rasmus-resa-v2';
+const CACHE_NAME = 'rasmus-resa-v3';
 let urlsToCache = [
   '/',
   '/favicon.ico',

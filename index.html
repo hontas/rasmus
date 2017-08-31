@@ -195,9 +195,9 @@ Vue.component('location-input', {
     locationApi: {
       type: String,
       validator(value) {
-        return Object.peototype.hasOwnProperty.call(window[value], 'findStops') &&
-          Object.peototype.hasOwnProperty.call(window[value], 'getClosestStop') &&
-          Object.peototype.hasOwnProperty.call(window[value], 'getClosestStops') &&
+        return Object.prototype.hasOwnProperty.call(window[value], 'findStops') &&
+          Object.prototype.hasOwnProperty.call(window[value], 'getClosestStop') &&
+          Object.prototype.hasOwnProperty.call(window[value], 'getClosestStops') &&
           typeof window[value].findStops === 'function' &&
           typeof window[value].getClosestStop === 'function' &&
           typeof window[value].getClosestStops === 'function';
