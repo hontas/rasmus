@@ -9,7 +9,6 @@
   <link rel="stylesheet" type="text/css" href="css/style.css">
   <link rel="shortcut icon" type="image/x-icon" href="favicon.ico" />
   <title>Resmus - Rasmus reseplanerare</title>
-  <script type="text/javascript" src="js/vendor/vue.js"></script>
 
   <script type="text/x-template" id="search-trip">
     <div class="search-trip">
@@ -107,6 +106,7 @@
     </li>
   </ul> -->
 
+  <script type="text/javascript" src="js/vendor/vue.js"></script>
   <script src="js/vendor/jquery-3.2.1.slim.min.js"></script>
   <script src="js/vendor/moment.js"></script>
   <!-- <script src="js/trafikMeddelanden.js"></script> -->
@@ -115,357 +115,361 @@
   <script src="js/tv.js"></script>
   <script src="js/resrobot.js"></script>
   <script>
-    const positionPromise = getPosition()
-      .then(({ coords: { latitude: lat, longitude: long }}) => ({ lat, long }));
+const positionPromise = getPosition()
+  .then(({ coords: { latitude: lat, longitude: long }}) => ({ lat, long }));
 
-    Vue.component('digital-clock', {
-      data () {
-        return {
-          hours: '',
-          minutes: '',
-          seconds: '',
-        }
-      },
-      created() {
-        this.updateDateTime();
-        setInterval(this.updateDateTime, 1000);
-      },
-      methods: {
-        updateDateTime () {
-          const now = new Date();
-          this.hours = String(now.getHours()).padStart(2, "0");
-          this.minutes = String(now.getMinutes()).padStart(2, "0");
-          this.seconds = String(now.getSeconds()).padStart(2, "0");
-        }
-      },
-      template: `
-        <div class="digital-clock">
-          {{ hours }}:{{ minutes }}:{{ seconds }}
-        </div>
-      `
-    });
+Vue.component('digital-clock', {
+  data() {
+    return {
+      hours: '',
+      minutes: '',
+      seconds: '',
+    };
+  },
+  created() {
+    this.updateDateTime();
+    setInterval(this.updateDateTime, 1000);
+  },
+  methods: {
+    updateDateTime() {
+      const now = new Date();
+      this.hours = String(now.getHours()).padStart(2, "0");
+      this.minutes = String(now.getMinutes()).padStart(2, "0");
+      this.seconds = String(now.getSeconds()).padStart(2, "0");
+    }
+  },
+  template: `
+    <div class="digital-clock">
+      {{ hours }}:{{ minutes }}:{{ seconds }}
+    </div>
+  `
+});
 
-    Vue.component('destination-board', {
-      props: {
-        trips: Array
-      },
-      methods: {
-        getJurneyDetails(trip) {
-          fetch(trip.href)
-            .then((resp) => resp.json())
-            .then((json) => console.log(json));
-        }
-      },
-      template: `
-        <table class="destination-board">
-          <thead>
-            <tr>
-              <th>Till</th>
-              <th>Tid</th>
-              <th>Linje</th>
-              <th>Spår/Läge</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="trip in trips" :key="trip.id" @click.prevent="getJurneyDetails(trip)">
-              <td class="trip-dest">{{ trip.direction }}</td>
-              <td class="trip-time" :class="{ 'is-late': trip.isLate }">{{ trip.time }}</td>
-              <td class="trip-line">{{ trip.name }}</td>
-              <td class="trip-track">{{ trip.track }}</td>
-            </tr>
-          </tbody>
-          <tfoot v-show="trips.length === 0">
-            <tr>
-              <td colspan="4">Inga resor att visa</td>
-            </tr>
-          </tfoot>
-        </div>
-      `
-    });
+Vue.component('destination-board', {
+  props: {
+    trips: Array
+  },
+  methods: {
+    getJurneyDetails(trip) {
+      fetch(trip.href)
+        .then((resp) => resp.json())
+        .then((json) => console.log(json));
+    }
+  },
+  template: `
+    <table class="destination-board">
+      <thead>
+        <tr>
+          <th>Till</th>
+          <th>Tid</th>
+          <th>Linje</th>
+          <th>Spår/Läge</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="trip in trips" :key="trip.id" @click.prevent="getJurneyDetails(trip)">
+          <td class="trip-dest">{{ trip.direction }}</td>
+          <td class="trip-time" :class="{ 'is-late': trip.isLate }">{{ trip.time }}</td>
+          <td class="trip-line">{{ trip.name }}</td>
+          <td class="trip-track">{{ trip.track }}</td>
+        </tr>
+      </tbody>
+      <tfoot v-show="trips.length === 0">
+        <tr>
+          <td colspan="4">Inga resor att visa</td>
+        </tr>
+      </tfoot>
+    </div>
+  `
+});
 
-    Vue.component('location-input', {
-      props: {
-        label: String,
-        disabled: Boolean,
-        parentLoading: Boolean,
-        displayNearbyStops: {
-          type: Boolean,
-          default: false
-        },
-        locationApi: {
-          type: String,
-          validator(value) {
-            return window[value].hasOwnProperty('findStops') &&
-              window[value].hasOwnProperty('getClosestStop') &&
-              window[value].hasOwnProperty('getClosestStops') &&
-              typeof window[value].findStops === 'function' &&
-              typeof window[value].getClosestStop === 'function' &&
-              typeof window[value].getClosestStops === 'function';
-          }
-        }
-      },
-      data() {
-        return {
-          show: false,
-          isFetching: false,
-          fetchingNearbyStops: this.displayNearbyStops,
-          searchText: "",
-          suggestions: [],
-          nearbyStations: []
-        };
-      },
-      computed: {
-        isLoading() {
-          return this.isFetching || this.parentLoading
-        },
-        hasSuggestions() {
-          return this.suggestions.length || this.nearbyStations.length;
-        }
-      },
-      created() {
-        this.debouncedGetSuggestions = debounce(this.getSuggestions, 350, this);
-        if (!this.displayNearbyStops) return;
-        positionPromise
-          .then(window[this.locationApi].getClosestStops)
-          .then((stations) => {
-          this.nearbyStations = stations;
-          this.fetchingNearbyStops = false;
-        })
-      },
-      methods: {
-        onInput({ target: { value }}) {
-          if (!value) {
-            this.suggestions = [];
-          } else {
-            this.isFetching = true;
-            this.debouncedGetSuggestions(value);
-          }
-        },
-        getSuggestions(value) {
-          return window[this.locationApi].findStops(value)
-            .then((stops) => {
-              this.isFetching = false;
-              this.suggestions = [].concat(stops);
-              this.showDropDown();
-            });
-          return "hello";
-        },
-        findNearestStop() {
-          this.isFetching = true;
-          Promise.resolve(positionPromise)
-            .then(window[this.locationApi].getClosestStop)
-            .then((location) => {
-              if (location) this.onSelect(location);
-              this.show = false;
-              this.isFetching = false;
-              this.isLoading = false;
-            });
-        },
-        onSelect(suggestion) {
-          this.searchText = suggestion.name;
-          this.$emit('set-location', suggestion);
-          this.hideDropDown();
-          this.getSuggestions(suggestion.name)
-            .then(this.hideDropDown);
-        },
-        selectFirstSuggestion() {
-          if (this.suggestions.length === 0) return;
-          this.onSelect(this.suggestions[0]);
-        },
-        handleKeyInput(e) {
-          const dict = {
-            ArrowUp: 'previousElementSibling',
-            ArrowDown: 'nextElementSibling'
-          };
-
-          const getSibling = (el) => el.parentElement[dict[e.key]];
-
-          if (["ArrowDown", "ArrowUp"].includes(e.key) && this.show && this.hasSuggestions) {
-            const focused = this.$el.querySelector('.location-input__suggestions a:focus');
-            if (!focused) return this.$el.querySelector('.location-input__suggestions a').focus();
-            const next = getSibling(focused);
-            if (!next) return;
-            next.querySelector('a').focus();
-          }
-        },
-        showDropDown() {
-          this.show = true;
-        },
-        hideDropDown() {
+Vue.component('location-input', {
+  props: {
+    label: String,
+    disabled: Boolean,
+    parentLoading: Boolean,
+    displayNearbyStops: {
+      type: Boolean,
+      default: false
+    },
+    locationApi: {
+      type: String,
+      validator(value) {
+        return Object.peototype.hasOwnProperty.call(window[value], 'findStops') &&
+          Object.peototype.hasOwnProperty.call(window[value], 'getClosestStop') &&
+          Object.peototype.hasOwnProperty.call(window[value], 'getClosestStops') &&
+          typeof window[value].findStops === 'function' &&
+          typeof window[value].getClosestStop === 'function' &&
+          typeof window[value].getClosestStops === 'function';
+      }
+    }
+  },
+  data() {
+    return {
+      show: false,
+      isFetching: false,
+      fetchingNearbyStops: this.displayNearbyStops,
+      searchText: '',
+      suggestions: [],
+      nearbyStations: []
+    };
+  },
+  computed: {
+    isLoading() {
+      return this.isFetching || this.parentLoading;
+    },
+    hasSuggestions() {
+      return this.suggestions.length || this.nearbyStations.length;
+    }
+  },
+  created() {
+    this.debouncedGetSuggestions = debounce(this.getSuggestions, 350, this);
+    if (!this.displayNearbyStops) return;
+    positionPromise
+      .then(window[this.locationApi].getClosestStops)
+      .then((stations) => {
+        this.nearbyStations = stations;
+        this.fetchingNearbyStops = false;
+      });
+  },
+  methods: {
+    onInput({ target: { value } }) {
+      if (!value) {
+        this.suggestions = [];
+      } else {
+        this.isFetching = true;
+        this.debouncedGetSuggestions(value);
+      }
+    },
+    getSuggestions(value) {
+      return window[this.locationApi].findStops(value)
+        .then((stops) => {
+          this.isFetching = false;
+          this.suggestions = [].concat(stops);
+          this.showDropDown();
+        });
+    },
+    findNearestStop() {
+      this.isFetching = true;
+      Promise.resolve(positionPromise)
+        .then(window[this.locationApi].getClosestStop)
+        .then((location) => {
+          if (location) this.onSelect(location);
           this.show = false;
-          document.activeElement.blur();
-        },
-        possiblyHideDropDown(e) {
-          if (e.relatedTarget && this.$el.contains(e.relatedTarget)) return;
-          this.hideDropDown();
-        }
-      },
-      template: '#location-input'
-    });
+          this.isFetching = false;
+          this.isLoading = false;
+        });
+    },
+    onSelect(suggestion) {
+      this.searchText = suggestion.name;
+      this.$emit('set-location', suggestion);
+      this.hideDropDown();
+      this.getSuggestions(suggestion.name)
+        .then(this.hideDropDown);
+    },
+    selectFirstSuggestion() {
+      if (this.suggestions.length === 0) return;
+      this.onSelect(this.suggestions[0]);
+    },
+    handleKeyInput(e) {
+      const dict = {
+        ArrowUp: 'previousElementSibling',
+        ArrowDown: 'nextElementSibling'
+      };
 
-    Vue.component('trips-list', {
-      props: {
-        trips: Array
-      },
-      template: `
-        <ul class="trips">
-          <li v-for="trip in trips">
-            <trips-item :trip="trip">
+      const getSibling = (el) => el.parentElement[dict[e.key]];
+
+      if (['ArrowDown', 'ArrowUp'].includes(e.key) && this.show && this.hasSuggestions) {
+        const focused = this.$el.querySelector('.location-input__suggestions a:focus');
+        if (!focused) return this.$el.querySelector('.location-input__suggestions a').focus();
+        const next = getSibling(focused);
+        if (!next) return;
+        next.querySelector('a').focus();
+      }
+    },
+    showDropDown() {
+      this.show = true;
+    },
+    hideDropDown() {
+      this.show = false;
+      document.activeElement.blur();
+    },
+    possiblyHideDropDown(e) {
+      if (e.relatedTarget && this.$el.contains(e.relatedTarget)) return;
+      this.hideDropDown();
+    }
+  },
+  template: '#location-input'
+});
+
+Vue.component('trips-list', {
+  props: {
+    trips: Array
+  },
+  template: `
+    <ul class="trips">
+      <li v-for="trip in trips">
+        <trips-item :trip="trip">
+      </li>
+    </ul>
+  `
+});
+
+Vue.component('trips-item', {
+  props: {
+    trip: Object
+  },
+  methods: {
+    isLast(index, trip) {
+      return index === trip.length - 1;
+    }
+  },
+  template: `
+    <article class="trip">
+      <header>
+        <h1>{{ trip.departs }} » {{ trip.arrives }}</h1>
+        <p class="trip__duration">Restid {{ trip.duration }}</p>
+      </header>
+      <main>
+        <ul class="trip__short-legs">
+          <li class="trip__short-leg" v-for="leg in trip.legs">
+            <span :class="leg.type"></span>
           </li>
         </ul>
-      `
-    });
+        <p>{{ trip.legs.length - 1 }} byte</p>
+      </main>
+      <div class="trip__details" v-show="display-details">
+        <ul class="trip__legs">
+          <li class="trip__leg" :class="leg.type" v-for="(leg, index) in trip.legs">
+            {{ leg.text }} <br/>
+            <span class="trip__dest" v-if="isLast(index, trip)">
+              ⇥ {{ leg.to.time }}
+            </span>
+          </li>
+        </ul>
+      </div>
+    </article>
+  `
+});
 
-    Vue.component('trips-item', {
-      props: {
-        trip: Object
-      },
-      methods: {
-        isLast(index, trip) {
-          return index === trip.length - 1;
-        }
-      },
-      template: `
-        <article class="trip">
-          <header>
-            <h1>{{ trip.departs }} » {{ trip.arrives }}</h1>
-            <p class="trip__duration">Restid {{ trip.duration }}</p>
-          </header>
-          <main>
-            <ul class="trip__short-legs">
-              <li class="trip__short-leg" v-for="leg in trip.legs">
-                <span :class="leg.type"></span>
-              </li>
-            </ul>
-            <p>{{ trip.legs.length - 1 }} byte</p>
-          </main>
-          <div class="trip__details" v-show="display-details">
-            <ul class="trip__legs">
-              <li class="trip__leg" :class="leg.type" v-for="(leg, index) in trip.legs">
-                {{ leg.text }} <br/>
-                <span class="trip__dest" v-if="isLast(index, trip)">
-                  ⇥ {{ leg.to.time }}
-                </span>
-              </li>
-            </ul>
-          </div>
-        </article>
-      `
-    });
-
-    Vue.component('search-trip', {
-      template: '#search-trip',
-      data() {
-        return {
-          from: null,
-          dest: null,
-          isLoading: false,
-          trips: [],
-          initialized: false
-        };
-      },
-      created() {
-        VT.init()
-          .then(() => this.initialized = true);
-      },
-      methods: {
-        setFrom(location) {
-          this.from = location.id;
-        },
-        setDest(location) {
-          this.dest = location.id;
-          if (this.from) this.findTrip();
-        },
-        findTrip() {
-          this.isLoading = true;
-          RR.getTripSuggestion(this.from, this.dest)
-            .then((trips) => {
-              this.trips = trips;
-              this.isLoading = false;
-            });
-        }
-      }
-    });
-
-    Vue.component('station-info', {
-      template: '#station-info',
-      data() {
-        return {
-          from: null,
-          isLoading: false,
-          initialized: false,
-          trips: []
-        };
-      },
-      computed: {
-        show() {
-          return !!this.trips.length;
-        }
-      },
-      created() {
-        VT.init()
-          .then(() => this.initialized = true);
-      },
-      methods: {
-        setFrom(location) {
-          this.location = location;
-          this.trips = [];
-          this.isLoading = true;
-          this.getDepartures();
-
-          // refresh list every 20 seconds
-          this.lastIntervalId && clearInterval(this.lastIntervalId);
-          this.lastIntervalId = setInterval(this.getDepartures, 20000);
-        },
-        getDepartures() {
-          window[this.location.region].getDeparturesFrom(this.location.id)
-            .then((resp) => {
-              this.trips = resp
-              this.isLoading = false;
-            });
-        }
-      }
-    });
-
-    new Vue({
-      el: '#app',
-      data: { tab: 1 },
-      methods: {
-        changeTab(tab) {
-          this.tab = tab;
-        }
-      }
-    });
-
-    function debounce(fn, delay, context) {
-      var timeoutId;
-      context = context || this;
-      return (...args) => {
-        if (timeoutId) clearTimeout(timeoutId);
-        timeoutId = setTimeout(() => fn.apply(context, args), delay);
-      }
-    }
-
-    function getPosition() {
-      return new Promise((resolve, reject) => {
-        if (!("geolocation" in navigator)) return reject();
-
-        navigator.geolocation.getCurrentPosition(resolve);
+Vue.component('search-trip', {
+  template: '#search-trip',
+  data() {
+    return {
+      from: null,
+      dest: null,
+      isLoading: false,
+      trips: [],
+      initialized: false
+    };
+  },
+  created() {
+    VT.init()
+      .then(() => {
+        this.initialized = true;
       });
-    }
-  </script>
-  <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', function() {
-        navigator.serviceWorker.register('sw.js').then(function(registration) {
-          // Registration was successful
-          console.log('ServiceWorker registration successful with scope: ', registration.scope);
-        }, function(err) {
-          // registration failed :(
-          console.log('ServiceWorker registration failed: ', err);
+  },
+  methods: {
+    setFrom(location) {
+      this.from = location.id;
+    },
+    setDest(location) {
+      this.dest = location.id;
+      if (this.from) this.findTrip();
+    },
+    findTrip() {
+      this.isLoading = true;
+      RR.getTripSuggestion(this.from, this.dest)
+        .then((trips) => {
+          this.trips = trips;
+          this.isLoading = false;
         });
-      });
     }
+  }
+});
+
+Vue.component('station-info', {
+  template: '#station-info',
+  data() {
+    return {
+      from: null,
+      isLoading: false,
+      initialized: false,
+      trips: []
+    };
+  },
+  computed: {
+    show() {
+      return !!this.trips.length;
+    }
+  },
+  created() {
+    VT.init()
+      .then(() => {
+        this.initialized = true;
+      });
+  },
+  methods: {
+    setFrom(location) {
+      this.location = location;
+      this.trips = [];
+      this.isLoading = true;
+      this.getDepartures();
+
+      // refresh list every 20 seconds
+      if (this.lastIntervalId) {
+        clearInterval(this.lastIntervalId);
+      }
+      this.lastIntervalId = setInterval(this.getDepartures, 20000);
+    },
+    getDepartures() {
+      window[this.location.region].getDeparturesFrom(this.location.id)
+        .then((resp) => {
+          this.trips = resp;
+          this.isLoading = false;
+        });
+    }
+  }
+});
+
+new Vue({
+  el: '#app',
+  data: { tab: 1 },
+  methods: {
+    changeTab(tab) {
+      this.tab = tab;
+    }
+  }
+});
+
+function debounce(fn, delay, context) {
+  let timeoutId;
+  context = context || this;
+  return (...args) => {
+    if (timeoutId) clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => fn.apply(context, args), delay);
+  };
+}
+
+function getPosition() {
+  return new Promise((resolve, reject) => {
+    if (!('geolocation' in navigator)) return reject();
+
+    navigator.geolocation.getCurrentPosition(resolve);
+  });
+}
+</script>
+  <script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js')
+      .then((registration) => {
+        console.log('ServiceWorker registration successful with scope: ', registration.scope);
+      }, (err) => {
+        console.log('ServiceWorker registration failed: ', err);
+      });
+  });
+}
   </script>
 </body>
 </html>
