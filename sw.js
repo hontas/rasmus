@@ -23,10 +23,9 @@ let urlsToCache = [
   '/js/vt.js'
 ];
 
-console.log('location.hostname', location.hostname);
 if (location.hostname !== 'localhost') {
-  console.log('prefixing url path');
-  urlsToCache = urlsToCache.map((str) => `/rasmus${str}`);
+  urlsToCache = urlsToCache.map((str) => str.replace('/', location.pathname));
+  console.log(urlsToCache);
 }
 
 self.addEventListener('install', (event) => {
