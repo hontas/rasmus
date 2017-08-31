@@ -25,9 +25,7 @@ let urlsToCache = [
 
 if (location.hostname !== 'localhost') {
   const pathName = location.pathname.match(/(\/[^/]+\/([^/]+\/)*)/)[1];
-  console.log('pathName', pathName);
   urlsToCache = urlsToCache.map((str) => str.replace('/', pathName));
-  console.log(urlsToCache);
 }
 
 self.addEventListener('install', (event) => {

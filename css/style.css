@@ -281,7 +281,7 @@ body {
 .digital-clock {
   background: lightgray;
   border-bottom: 1px solid gray;
-  color: gray;
+  color: dimgray;
   font-family: monospace;
   font-size: 1.2em;
   font-weight: bold;
