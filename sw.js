@@ -1,4 +1,4 @@
-const CACHE_NAME = 'rasmus-resa-v3';
+const CACHE_NAME = 'rasmus-resa-v4';
 let urlsToCache = [
   '/',
   '/favicon.ico',
@@ -39,7 +39,7 @@ self.addEventListener('install', (event) => {
 self.addEventListener('activate', (event) => {
   const cacheWhitelist = [CACHE_NAME];
 
-  event.waitUntil((async function iife() {
+  event.waitUntil((async function aiife() {
     const cacheNames = await caches.keys();
     const cachesToDelete = cacheNames
       .filter((cacheName) => !cacheWhitelist.includes(cacheName))
@@ -51,15 +51,17 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   if (event.request.url.startsWith(self.location.origin)) {
-    event.respondWith(
-      caches.match(event.request)
-        .then((response) => {
-          if (response) {
-            return response;
-          }
+    // update static cache
+    event.respondWith((async function aiife() {
+      const cache = await caches.open(CACHE_NAME);
+      const response = await cache.match(event.request);
+      const fetchPromise = fetch(event.request);
+      const networkResponse = await fetchPromise;
 
-          return fetch(event.request);
-        })
-    );
+      if (networkResponse.ok) {
+        cache.put(event.request, networkResponse.clone());
+      }
+      return response || fetchPromise;
+    }()));
   }
 });
