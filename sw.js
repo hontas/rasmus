@@ -55,12 +55,14 @@ self.addEventListener('fetch', (event) => {
     event.respondWith((async function aiife() {
       const cache = await caches.open(CACHE_NAME);
       const response = await cache.match(event.request);
-      const fetchPromise = fetch(event.request);
-      const networkResponse = await fetchPromise;
+      const fetchPromise = fetch(event.request)
+        .then((networkResponse) => {
+          if (networkResponse.ok) {
+            cache.put(event.request, networkResponse.clone());
+          }
+          return networkResponse;
+        });
 
-      if (networkResponse.ok) {
-        cache.put(event.request, networkResponse.clone());
-      }
       return response || fetchPromise;
     }()));
   }
