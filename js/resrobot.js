@@ -47,16 +47,21 @@ window.RR = (function resrRobot() {
       .replace('M', 'min');
 
     function getLeg({ type, name, Product, Destination, Origin, duration }) {
+      if (!Product) console.log('missing Product', type, name);
       const orig = getStop(Origin);
       const dest = getStop(Destination);
+      const legName = type === 'WALK' ? 'Gå' : name;
+      const trackNumber = Product && Product.num;
+      const modeOfTransportation = Product ? catCodes[Product.catCode] : legName;
+
       return {
         type,
-        name: (type === 'WALK' ? 'Gå' : name),
+        name: legName,
         from: orig,
         to: dest,
         text: (type === 'WALK' ?
           `${orig.time} Gå till ${dest.name} (${readableTime(duration)})` :
-          `${orig.time} ${catCodes[Product.catCode]} ${Product.num} från ${orig.name} ${orig.track}`),
+          `${orig.time} ${modeOfTransportation} ${Product && Product.num} från ${orig.name} ${orig.track}`),
       };
     }
 

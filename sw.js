@@ -1,5 +1,6 @@
 const CACHE_NAME = 'rasmus-resa-v4';
-let urlsToCache = [
+const pathName = location.pathname.match(/(\/[^/]+\/([^/]+\/)*)/)[1];
+const urlsToCache = [
   '/',
   '/favicon.ico',
   '/manifest.json',
@@ -21,12 +22,7 @@ let urlsToCache = [
   '/js/trafikMeddelanden.js',
   '/js/tv.js',
   '/js/vt.js'
-];
-
-if (location.hostname !== 'localhost') {
-  const pathName = location.pathname.match(/(\/[^/]+\/([^/]+\/)*)/)[1];
-  urlsToCache = urlsToCache.map((str) => str.replace('/', pathName));
-}
+].map((str) => str.replace('/', pathName));
 
 self.addEventListener('install', (event) => {
   event.waitUntil((async function aiife() {

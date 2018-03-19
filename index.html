@@ -461,6 +461,7 @@ function getPosition() {
 </script>
   <script>
 if ('serviceWorker' in navigator) {
+  if (window.location.hostname === 'localhost') return;
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('sw.js')
       .then((registration) => {
