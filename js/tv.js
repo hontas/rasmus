@@ -115,7 +115,7 @@ var TV = (function() {
     },
     getDeparturesFrom(station) {
       return tvApiRequest('TrainAnnouncement', station)
-        .then((resp) => (resp || []).slice(0, 10))
+        .then((resp) => (resp || []).slice(0, 30))
         .then(logMiddleware)
         .then((deps) => deps.map((dep) => ({
           id: dep.LocationSignature,

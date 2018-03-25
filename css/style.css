@@ -233,21 +233,21 @@ body {
 
 .destination-board td,
 .destination-board th {
-  padding: .5em;
+  padding: 1em .5em;
 }
 
 .destination-board .trip-dest {
   font-weight: 500;
 }
 .destination-board .trip-time {
-  width: 70px;
+  width: 60px;
 }
 .destination-board .trip-time.is-late {
   color: red;
 }
 .destination-board .trip-track {
   text-align: center;
-  width: 90px;
+  width: 50px;
 }
 
 .BUS:before {

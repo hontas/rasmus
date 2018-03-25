@@ -50,7 +50,7 @@
           @keyup.enter="selectFirstSuggestion"
           @keyup="handleKeyInput"
           type="search"
-          placeholder="Ange station"
+          placeholder="Hållplats"
           :disabled="disabled">
         <i class="fa fa-spin" :class="{ 'fa-spinner': isLoading }" aria-hidden="true"></i>
       </label>
@@ -149,34 +149,30 @@ Vue.component('destination-board', {
   props: {
     trips: Array
   },
-  methods: {
-    getJurneyDetails(trip) {
-      fetch(trip.href)
-        .then((resp) => resp.json())
-        .then((json) => console.log(json));
-    }
-  },
+  methods: {},
   template: `
     <table class="destination-board">
       <thead>
         <tr>
-          <th>Till</th>
-          <th>Tid</th>
           <th>Linje</th>
-          <th>Spår/Läge</th>
+          <th>Till</th>
+          <th>Nästa</th>
+          <th>Därefter</th>
+          <th>Läge</th>
         </tr>
       </thead>
       <tbody>
-        <tr v-for="trip in trips" :key="trip.id" @click.prevent="getJurneyDetails(trip)">
+        <tr v-for="trip in trips" :key="trip.id">
+          <td class="trip-line">{{ trip.name }}</td>
           <td class="trip-dest">{{ trip.direction }}</td>
           <td class="trip-time" :class="{ 'is-late': trip.isLate }">{{ trip.time }}</td>
-          <td class="trip-line">{{ trip.name }}</td>
+          <td class="trip-time">{{ trip.nextTime }}</td>
           <td class="trip-track">{{ trip.track }}</td>
         </tr>
       </tbody>
       <tfoot v-show="trips.length === 0">
         <tr>
-          <td colspan="4">Inga resor att visa</td>
+          <td colspan="5">Inga resor att visa</td>
         </tr>
       </tfoot>
     </div>
@@ -425,12 +421,28 @@ Vue.component('station-info', {
     getDepartures() {
       window[this.location.region].getDeparturesFrom(this.location.id)
         .then((resp) => {
-          this.trips = resp;
+          this.trips = groupDepartureByDestination(resp);
           this.isLoading = false;
         });
     }
   }
 });
+
+function groupDepartureByDestination(departures) {
+  const grouped = departures.reduce((res, departure) => {
+    if (!res[departure.direction]) {
+      res[departure.direction] = [];
+    }
+    res[departure.direction].push(departure);
+    return res;
+  }, {});
+  return Object.values(grouped)
+    .map(([first, second]) => ({
+      ...first,
+      name: first.name.split(' ')[1],
+      nextTime: second.time
+    }));
+}
 
 new Vue({
   el: '#app',
