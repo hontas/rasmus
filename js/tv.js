@@ -12,7 +12,7 @@ var TV = (function() {
         return `
           <FILTER>
             <AND>
-              <LIKE name="AdvertisedLocationName" value="/^${swapÅandÄ(name)}/i" />
+              <LIKE name="AdvertisedLocationName" value="/^${name}/" />
               <EQ name="Advertised" value="true" />
             </AND>
           </FILTER>
@@ -54,12 +54,8 @@ var TV = (function() {
     }
   };
 
-  function swapÅandÄ(string) {
-    return string.replace(/[åä]/ig, (m) => /å/i.test(m) ? 'ä' : 'å');
-  }
-
   function tvApiRequest(objectType, ...args) {
-    return fetch('https://api.trafikinfo.trafikverket.se/v1.2/data.json', {
+    return fetch('https://api.trafikinfo.trafikverket.se/v1.3/data.json', {
       body: `
         <REQUEST>
           ${auth}
