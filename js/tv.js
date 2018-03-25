@@ -116,6 +116,7 @@ var TV = (function() {
         .then((deps) => deps.map((dep) => ({
           id: dep.LocationSignature,
           direction: dep.ToLocation && TV.stationMap[dep.ToLocation[0].LocationName] || '',
+          via: dep.ViaToLocation && TV.stationMap[dep.ViaToLocation[0].LocationName] || '',
           name: `${dep.ProductInformation.join(' ')}`,
           time: dep.AdvertisedTimeAtLocation.substr(-8, 5),
           isLate: false,

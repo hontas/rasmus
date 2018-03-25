@@ -164,7 +164,7 @@ Vue.component('destination-board', {
       <tbody>
         <tr v-for="trip in trips" :key="trip.id">
           <td class="trip-line">{{ trip.name }}</td>
-          <td class="trip-dest">{{ trip.direction }}</td>
+          <td class="trip-dest">{{ trip.direction }}<em v-if="trip.via"> via {{ trip.via }}</em></td>
           <td class="trip-time" :class="{ 'is-late': trip.isLate }">{{ trip.time }}</td>
           <td class="trip-time">{{ trip.nextTime }}</td>
           <td class="trip-track">{{ trip.track }}</td>
@@ -440,7 +440,7 @@ function groupDepartureByDestination(departures) {
     .map(([first, second]) => ({
       ...first,
       name: first.name.split(' ')[1],
-      nextTime: second.time
+      nextTime: second ? second.time : '-'
     }));
 }
 
