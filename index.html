@@ -13,7 +13,7 @@
   <script type="text/x-template" id="search-trip">
     <div class="search-trip">
       <div class="form">
-        <i class="fa" :class="{ 'fa-spin':  !initialized, 'fa-spinner': !initialized }"></i>
+        <i v-if="!initialized" class="fa fa-spin fa-spinner"></i>
         <location-input displayNearbyStops locationApi="RR" label="Från" :parentLoading="isLoading" :disabled="!initialized" @set-location="setFrom"></location-input>
         <location-input locationApi="RR" label="Till" :parentLoading="isLoading" :disabled="!initialized" @set-location="setDest"></location-input>
         <button class="btn" @click="findTrip" :disabled="!from || !dest">
@@ -28,10 +28,10 @@
   <script type="text/x-template" id="station-info">
     <div class="station-info">
       <div class="form">
-        <i class="fa" :class="{ 'fa-spin':  !initialized, 'fa-spinner': !initialized }"></i>
+        <i v-if="!initialized" class="fa fa-spin fa-spinner"></i>
         <location-input locationApi="VT" displayNearbyStops label="Från" :parentLoading="isLoading" :disabled="!initialized" @set-location="setFrom"></location-input>
       </div>
-      <destination-board :trips="trips"></destination-board>
+      <destination-board :trips="trips" :from="location.name"></destination-board>
     </div>
   </script>
 
@@ -81,7 +81,7 @@
     <div class="top-nav">
       <ul class="tabs">
         <li class="tab" :class="{ active: (tab === 1) }" @click="changeTab(1)">Sök resa (resrobot)</li>
-        <li class="tab" :class="{ active: (tab === 2) }" @click="changeTab(2)">Visa avgångar (västtrafik)</li>
+        <li class="tab" :class="{ active: (tab === 2) }" @click="changeTab(2)">Avgångar (västtrafik)</li>
       </ul>
       <digital-clock></digital-clock>
     </div>
@@ -147,7 +147,8 @@ Vue.component('digital-clock', {
 
 Vue.component('destination-board', {
   props: {
-    trips: Array
+    trips: Array,
+    from: String
   },
   methods: {},
   template: `
@@ -155,24 +156,32 @@ Vue.component('destination-board', {
       <thead>
         <tr>
           <th>Linje</th>
-          <th>Till</th>
-          <th>Nästa</th>
-          <th>Därefter</th>
-          <th>Läge</th>
+          <th>Destination</th>
+          <th>Tid</th>
+          <th>Ny tid</th>
+          <th>Hpl</th>
         </tr>
       </thead>
       <tbody>
         <tr v-for="trip in trips" :key="trip.id">
-          <td class="trip-line">{{ trip.name }}</td>
-          <td class="trip-dest">{{ trip.direction }}<em v-if="trip.via"> via {{ trip.via }}</em></td>
-          <td class="trip-time" :class="{ 'is-late': trip.isLate }">{{ trip.time }}</td>
-          <td class="trip-time">{{ trip.nextTime }}</td>
+          <td class="trip-line" :style="{ backgroundColor: trip.fgColor, color: trip.bgColor }">
+            {{ trip.sname }}
+          </td>
+          <td class="trip-dest">
+            <div class="trip-dest-name">{{ trip.direction }}</div>
+            <div class="trip-dest-via"><small v-if="trip.via"> via {{ trip.via }}</small></div>
+          </td>
+          <td class="trip-time">{{ trip.time }}</td>
+          <td class="trip-time is-late"><span v-if="trip.isLate">{{ trip.rtTime }}</span></td>
           <td class="trip-track">{{ trip.track }}</td>
         </tr>
-      </tbody>
-      <tfoot v-show="trips.length === 0">
-        <tr>
+        <tr v-show="from && trips.length === 0">
           <td colspan="5">Inga resor att visa</td>
+        </tr>
+      </tbody>
+      <tfoot v-if="from">
+        <tr>
+          <td colspan="5"><p>&nbsp;</p></td>
         </tr>
       </tfoot>
     </div>
@@ -303,7 +312,7 @@ Vue.component('trips-list', {
     trips: Array
   },
   template: `
-    <ul class="trips">
+    <ul class="trips" v-if="trips.length">
       <li v-for="trip in trips">
         <trips-item :trip="trip">
       </li>
@@ -388,7 +397,7 @@ Vue.component('station-info', {
   template: '#station-info',
   data() {
     return {
-      from: null,
+      location: {},
       isLoading: false,
       initialized: false,
       trips: []
@@ -407,8 +416,8 @@ Vue.component('station-info', {
   },
   methods: {
     setFrom(location) {
-      this.location = location;
-      this.trips = [];
+      console.log('set location', location);
+      this.location = location || {};
       this.isLoading = true;
       this.getDepartures();
 
@@ -421,31 +430,24 @@ Vue.component('station-info', {
     getDepartures() {
       window[this.location.region].getDeparturesFrom(this.location.id)
         .then((resp) => {
-          this.trips = groupDepartureByDestination(resp);
+          this.trips = resp.map(getDestinationVia);
+          console.log('this.trips', this.trips);
           this.isLoading = false;
         });
     }
   }
 });
 
-function groupDepartureByDestination(departures) {
-  const grouped = departures.reduce((res, departure) => {
-    if (!res[departure.direction]) {
-      res[departure.direction] = [];
-    }
-    res[departure.direction].push(departure);
-    return res;
-  }, {});
-  return Object.values(grouped)
-    .map(([first, second]) => {
-      const [name, number] = first.name.split(' ');
-      const nextTime = second ? second.time : '-';
-      return {
-        ...first,
-        name: number || name,
-        nextTime
-      };
+const viaRegExp = /\s*via\s*/;
+function getDestinationVia(departure) {
+  if (viaRegExp.test(departure.direction)) {
+    const [direction, via] = departure.direction.split(viaRegExp);
+    return Object.assign({}, departure, {
+      direction,
+      via
     });
+  }
+  return departure;
 }
 
 new Vue({
@@ -476,8 +478,7 @@ function getPosition() {
 }
 </script>
   <script>
-if ('serviceWorker' in navigator) {
-  if (window.location.hostname === 'localhost') return;
+if ('serviceWorker' in navigator && location.hostname !== 'localhost') {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('sw.js')
       .then((registration) => {

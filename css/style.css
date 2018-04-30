@@ -1,5 +1,7 @@
 :root {
-  --brand-color: darkred;
+  --brand-color: rgb(0, 157, 219);
+  --brand-text-color: white;
+  --brand-text-color-dim: rgba(255,255,255,.5);
 }
 
 html {
@@ -11,7 +13,7 @@ html {
 }
 
 body {
-  font-family: Helvetica Neue, sans-serif;
+  font-family: system-ui, Helvetica Neue, sans-serif;
   color: var(--brand-color);
   margin: 0;
   padding: 0;
@@ -30,7 +32,7 @@ body {
 .btn {
   border: none;
   background: var(--brand-color);
-  color: white;
+  color: var(--brand-text-color);
   display: block;
   font: inherit;
   font-weight: bold;
@@ -41,7 +43,7 @@ body {
 }
 
 .btn[disabled] {
-  color: darkgoldenrod;
+  color: var(--brand-text-color-dim);
   border-color: #500;
 }
 
@@ -59,7 +61,7 @@ body {
   --left-offset: 60px;
   position: relative;
   line-height: 2em;
-  margin-bottom: 0.5em;
+  margin: .5em 0;
 }
 
 .location-input .nearby-stations {
@@ -75,7 +77,7 @@ body {
 .location-input .nearby-stations li { display: inline-block; }
 .location-input .nearby-stations .nearby-station {
   background: var(--brand-color);
-  color: white;
+  color: var(--brand-text-color);
   display: block;
   line-height: 1.5em;
   margin-left: 5px;
@@ -159,8 +161,8 @@ body {
 
 .trips {
   background-color: lightgray;
-  margin: .5em 0;
-  padding-top: .5em;
+  margin: 0;
+  padding: .5em 0;
 }
 
 .trips, .trip {
@@ -203,18 +205,17 @@ body {
 }
 
 .destination-board {
+  background-color: white;
   border: 0;
   border-collapse: collapse;
+  color: rgb(0, 57, 77);
   width: 100%;
 }
 
 .destination-board thead,
 .destination-board tfoot {
-  background: #f0f0f0;
-  color: #505050;
-}
-.destination-board tfoot {
-  border-top: 1px solid #CCC;
+  background-color: var(--brand-color);
+  color: var(--brand-text-color);
 }
 
 .destination-board th {
@@ -222,28 +223,30 @@ body {
   text-align: left;
 }
 
-.destination-board tbody tr {
-  background: #212830;
-  color: #eadb87;
-}
-
 .destination-board tbody tr:nth-child(even) {
-  background: #4f6e9f;
+  background: #EEE;
 }
 
 .destination-board td,
 .destination-board th {
-  padding: 1em .5em;
+  padding: .5em;
 }
 
-.destination-board .trip-dest {
+.destination-board .trip-line {
+  padding: .5em;
+  text-align: center;
+  width: 50px;
+}
+.destination-board .trip-dest {}
+.destination-board .trip-dest-name {
   font-weight: 500;
 }
+.destination-board .trip-dest-via {}
 .destination-board .trip-time {
   width: 60px;
 }
 .destination-board .trip-time.is-late {
-  color: red;
+  color: var(--brand-color);
 }
 .destination-board .trip-track {
   text-align: center;
@@ -279,32 +282,32 @@ body {
 }
 
 .digital-clock {
-  background: lightgray;
+  background: var(--brand-color);
   border-bottom: 1px solid gray;
-  color: dimgray;
+  color: var(--brand-text-color-dim);
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
   font-family: monospace;
   font-size: 1.2em;
   font-weight: bold;
-  flex: 1;
   padding: .5em 1em;
-  text-align: right;
-  text-shadow: 1px 1px 0 #AAA, -1px -1px 0 #DDD;
 }
 
 .tabs {
   display: flex;
-  flex: 2;
   justify-content: center;
   list-style-type: none;
   margin: 0;
   padding: 0;
 }
 .tab {
+  background-color: whitesmoke;
   border: 1px solid gray;
   border-right: none;
   color: dimgray;
   cursor: pointer;
-  flex: 1;
   text-align: center;
   padding: .5em 1em;
 }
@@ -312,6 +315,7 @@ body {
   border: 1px solid gray;
 }
 .tab.active {
+  background-color: white;
   border: 1px solid var(--brand-color);
   border-bottom: none;
   color: var(--brand-color);

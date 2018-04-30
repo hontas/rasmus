@@ -9,7 +9,7 @@ var VT = (function() {
   function getTripSuggestion(from, dest) {
     const date = moment().format("YYYY-MM-DD");
     const time = moment().format("HH:mm");
-    const tripUrl = `${baseUrl}/trip?originId=${from}&destId=${dest}&date=${date}&time=${time}`;
+    const tripUrl = `${baseUrl}/trip?originId=${from}&destId=${dest}&date=${date}&time=${time}&format=json`;
     return anropaVasttrafik(tripUrl)
       .then((json) => asArray(json.TripList.Trip)
         .map((trip) => asArray(trip.Leg))
@@ -17,7 +17,7 @@ var VT = (function() {
   }
 
   function findStops(text) {
-    const requestUrl = `${baseUrl}/location.name?input=${encodeURIComponent(text)}`;
+    const requestUrl = `${baseUrl}/location.name?input=${encodeURIComponent(text)}&format=json`;
     return anropaVasttrafik(requestUrl)
       .then((json) => asArray(json.LocationList.StopLocation).slice(0, 5))
       .then((stops) => stops.map((stop) => Object.assign({}, stop, {
@@ -26,8 +26,15 @@ var VT = (function() {
   }
 
   function getDeparturesFrom(id) {
-    const requestUrl = `${baseUrl}/departureBoard?id=${encodeURIComponent(id)}`;
+    const requestUrl = `${baseUrl}/departureBoard?id=${encodeURIComponent(id)}&format=json`;
     return anropaVasttrafik(requestUrl)
+      .then((res) => {
+        const { error, errorText } = res;
+        if (error || errorText) {
+          console.log('Error:', error || errorText);
+        }
+        return res;
+      })
       .then((json) => asArray(json.DepartureBoard.Departure))
       .then((trips) => trips.filter((item, pos) => {
         const similar = trips.find((trip) => (trip.name === item.name && trip.time === item.time))
@@ -36,10 +43,9 @@ var VT = (function() {
       .then((trips) => {
         return trips.map((trip) => {
           const isLate = trip.rtTime && trip.rtTime !== trip.time;
+          // const journeyDetail = await anropaVasttrafik(trip.JourneyDetailRef.ref);
           return Object.assign({}, trip, {
-            time: trip.rtTime || trip.time,
             name: trip.sname || trip.name,
-            href: trip.JourneyDetailRef.ref,
             region: 'VT',
             isLate
           });
@@ -59,7 +65,7 @@ var VT = (function() {
     }
 
     return accessTokenPromise
-      .then(() => fetch(`${url}&format=json`, { headers }))
+      .then(() => fetch(url, { headers }))
       .then(fetchMiddleware);
   }
 
@@ -93,7 +99,7 @@ var VT = (function() {
   }
 
   function getClosestStops({ lat, long }, limit = 5) {
-    const url = `${baseUrl}/location.nearbystops?originCoordLat=${lat}&originCoordLong=${long}&maxNo=${limit}`;
+    const url = `${baseUrl}/location.nearbystops?originCoordLat=${lat}&originCoordLong=${long}&maxNo=${limit}&format=json`;
     anropaVasttrafik(url)
       .then((json) => {
         if (json.LocationList.errorText) {
