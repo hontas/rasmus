@@ -1,23 +1,30 @@
+/* globals moment */
 // Västtrafik api
 
-var VT = (function() {
-
-  const baseUrl = "https://api.vasttrafik.se/bin/rest.exe/v2";
+window.VT = (function VT() {
+  const travelPlanner = 'https://api.vasttrafik.se/bin/rest.exe/v2';
+  const trafficSituations = 'https://api.vasttrafik.se/ts/v1/traffic-situations';
   let authToken;
   let expDate;
 
+  function getTrafficSituations(method, gid) {
+    const url = method ? `${trafficSituations}/${method}/${gid}` : trafficSituations;
+    return anropaVasttrafik(url, { Accept: 'application/json' })
+      .then((situations) => situations.reduce((res, { title, description }) => `${res} ${title} ${description}`, ''));
+  }
+
   function getTripSuggestion(from, dest) {
-    const date = moment().format("YYYY-MM-DD");
-    const time = moment().format("HH:mm");
-    const tripUrl = `${baseUrl}/trip?originId=${from}&destId=${dest}&date=${date}&time=${time}&format=json`;
+    const date = moment().format('YYYY-MM-DD');
+    const time = moment().format('HH:mm');
+    const tripUrl = `${travelPlanner}/trip?originId=${from}&destId=${dest}&date=${date}&time=${time}&format=json`;
     return anropaVasttrafik(tripUrl)
-      .then((json) => asArray(json.TripList.Trip)
-        .map((trip) => asArray(trip.Leg))
-      );
+      .then((json) =>
+        asArray(json.TripList.Trip)
+          .map((trip) => asArray(trip.Leg)));
   }
 
   function findStops(text) {
-    const requestUrl = `${baseUrl}/location.name?input=${encodeURIComponent(text)}&format=json`;
+    const requestUrl = `${travelPlanner}/location.name?input=${encodeURIComponent(text)}&format=json`;
     return anropaVasttrafik(requestUrl)
       .then((json) => asArray(json.LocationList.StopLocation).slice(0, 5))
       .then((stops) => stops.map((stop) => Object.assign({}, stop, {
@@ -26,7 +33,8 @@ var VT = (function() {
   }
 
   function getDeparturesFrom(id) {
-    const requestUrl = `${baseUrl}/departureBoard?id=${encodeURIComponent(id)}&format=json`;
+    const requestUrl = `${travelPlanner}/departureBoard?id=${encodeURIComponent(id)}&format=json`;
+
     return anropaVasttrafik(requestUrl)
       .then((res) => {
         const { error, errorText } = res;
@@ -53,9 +61,10 @@ var VT = (function() {
       });
   }
 
-  function anropaVasttrafik(url) {
+  function anropaVasttrafik(url, userHeaders) {
     const accessTokenPromise = Promise.resolve();
     const headers = {
+      ...userHeaders,
       Authorization: `Bearer ${authToken}`
     };
 
@@ -69,37 +78,8 @@ var VT = (function() {
       .then(fetchMiddleware);
   }
 
-  function getLeg(leg) {
-    var text;
-
-    if (Array.isArray(leg)) {
-      text = leg.map(getOneLeg);
-      text.push(getDestText(leg[leg.length - 1]));
-
-      return text.join('<br>');
-    } else {
-      return `${getOneLeg(leg)} <br> ${getDestText(leg)}`;
-    }
-  }
-
-  function getOneLeg(leg) {
-    var track = leg.Origin.track ? `, läge ${leg.Origin.track}` : '';
-    var realTime = leg.Origin.rtTime;
-    var time = leg.Origin.time;
-    var timeStr = (realTime && realTime !== time) ? `${time} (${realTime})` : `${time}`;
-    return `${timeStr} ${leg.name} från ${leg.Origin.name}${track}`;
-  }
-
-  function getDestText(leg) {
-    var track = leg.Destination.track ? `, läge ${leg.Destination.track}` : '';
-    var realTime = leg.Destination.rtTime;
-    var time = leg.Destination.time;
-    var timeStr = (realTime && realTime !== time) ? `${time} (${realTime})` : `${time}`;
-    return `${timeStr} ${leg.Destination.name}${track}`;
-  }
-
   function getClosestStops({ lat, long }, limit = 5) {
-    const url = `${baseUrl}/location.nearbystops?originCoordLat=${lat}&originCoordLong=${long}&maxNo=${limit}&format=json`;
+    const url = `${travelPlanner}/location.nearbystops?originCoordLat=${lat}&originCoordLong=${long}&maxNo=${limit}&format=json`;
     anropaVasttrafik(url)
       .then((json) => {
         if (json.LocationList.errorText) {
@@ -116,7 +96,7 @@ var VT = (function() {
   function getAccessToken() {
     return fetch('https://api.vasttrafik.se:443/token', {
       headers: {
-        Authorization: 'Basic V3NWQzVFOEFvYnBaRV9DOGRpX3FFZF9DU0dJYTpLT3FmY3o3cmpBNW1DeFQ5RkJtVEhnQ3N4R01h',
+        Authorization: 'Basic b1pZclV2c1ZGTG8zZ2FSemNaS0NUbEdJX21ZYTo4bTlLNnFsaDVNQXBWRFdRYlVWSUhneWZja3dh',
         'Content-Type': 'application/x-www-form-urlencoded'
       },
       method: 'POST',
@@ -137,7 +117,7 @@ var VT = (function() {
   }
 
   function asArray(arg) {
-    return arg && [].concat(arg) || [];
+    return arg ? [].concat(arg) : [];
   }
 
   const authTokenPromise = getAccessToken();
@@ -152,7 +132,7 @@ var VT = (function() {
     getClosestStops,
     findStops,
     getTripSuggestion,
-    getDeparturesFrom
+    getDeparturesFrom,
+    getTrafficSituations
   };
-
 }());

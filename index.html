@@ -31,7 +31,7 @@
         <i v-if="!initialized" class="fa fa-spin fa-spinner"></i>
         <location-input locationApi="VT" displayNearbyStops label="Från" :parentLoading="isLoading" :disabled="!initialized" @set-location="setFrom"></location-input>
       </div>
-      <destination-board :trips="trips" :from="location.name"></destination-board>
+      <destination-board :trips="trips" :info="info" :from="location.name"></destination-board>
     </div>
   </script>
 
@@ -148,6 +148,7 @@ Vue.component('digital-clock', {
 Vue.component('destination-board', {
   props: {
     trips: Array,
+    info: String,
     from: String
   },
   methods: {},
@@ -181,7 +182,7 @@ Vue.component('destination-board', {
       </tbody>
       <tfoot v-if="from">
         <tr>
-          <td colspan="5"><p>&nbsp;</p></td>
+          <td colspan="5"><p>{{ info }}</p></td>
         </tr>
       </tfoot>
     </div>
@@ -400,7 +401,8 @@ Vue.component('station-info', {
       location: {},
       isLoading: false,
       initialized: false,
-      trips: []
+      trips: [],
+      info: ''
     };
   },
   computed: {
@@ -428,6 +430,11 @@ Vue.component('station-info', {
       this.lastIntervalId = setInterval(this.getDepartures, 20000);
     },
     getDepartures() {
+      window[this.location.region].getTrafficSituations('stoparea', this.location.id)
+        .then((situations) => {
+          console.log('situations', situations);
+          this.info = situations;
+        });
       window[this.location.region].getDeparturesFrom(this.location.id)
         .then((resp) => {
           this.trips = resp.map(getDestinationVia);
