@@ -115,6 +115,7 @@
   <script src="js/tv.js"></script>
   <script src="js/resrobot.js"></script>
   <script>
+/* global Vue, VT, RR */
 const positionPromise = getPosition()
   .then(({ coords: { latitude: lat, longitude: long }}) => ({ lat, long }));
 
@@ -148,7 +149,10 @@ Vue.component('digital-clock', {
 Vue.component('destination-board', {
   props: {
     trips: Array,
-    info: String,
+    info: {
+      message: String,
+      affectedLines: Array
+    },
     from: String,
   },
   data() {
@@ -171,7 +175,12 @@ Vue.component('destination-board', {
     },
     filteredTrips() {
       const { track, dest } = this.filter;
+      const { affectedLines } = this.info;
       return this.trips
+        .map((trip) => ({
+          ...trip,
+          isAffected: affectedLines.includes(trip.sname)
+        }))
         .filter((t) => (track ? t.track === track : true))
         .filter((t) => (dest ? t.direction === dest : true));
     }
@@ -204,7 +213,9 @@ Vue.component('destination-board', {
             {{ trip.sname }}
           </td>
           <td class="trip-dest">
-            <div class="trip-dest-name">{{ trip.direction }}</div>
+            <div class="trip-dest-name">
+              {{ trip.direction }}&nbsp;<span v-if="trip.isAffected">⛔️</span>
+            </div>
             <div class="trip-dest-via"><small v-if="trip.via"> via {{ trip.via }}</small></div>
           </td>
           <td class="trip-time">{{ trip.time }}</td>
@@ -217,7 +228,7 @@ Vue.component('destination-board', {
       </tbody>
       <tfoot v-if="from">
         <tr>
-          <td colspan="5"><p>{{ info }}</p></td>
+          <td colspan="5"><p>{{ info.message }}</p></td>
         </tr>
       </tfoot>
     </div>
@@ -453,7 +464,7 @@ Vue.component('station-info', {
   },
   methods: {
     setFrom(location) {
-      console.log('set location', location);
+      // console.log('set location', location);
       this.location = location || {};
       this.isLoading = true;
       this.getDepartures();
@@ -491,9 +502,10 @@ function getDestinationVia(departure) {
   return departure;
 }
 
+// eslint-disable-next-line
 new Vue({
   el: '#app',
-  data: { tab: 1 },
+  data: { tab: 2 },
   methods: {
     changeTab(tab) {
       this.tab = tab;
@@ -512,9 +524,11 @@ function debounce(fn, delay, context) {
 
 function getPosition() {
   return new Promise((resolve, reject) => {
-    if (!('geolocation' in navigator)) return reject();
-
-    navigator.geolocation.getCurrentPosition(resolve);
+    if (!('geolocation' in navigator)) {
+      reject();
+    } else {
+      navigator.geolocation.getCurrentPosition(resolve);
+    }
   });
 }
 
@@ -526,8 +540,8 @@ function sortNumbersAndLetters(a, b) {
   return 0;
 }
 </script>
-  <script>
-if ('serviceWorker' in navigator && location.hostname !== 'localhost') {
+<script>
+if ('serviceWorker' in navigator && window.location.hostname !== 'localhost') {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('sw.js')
       .then((registration) => {
@@ -537,6 +551,6 @@ if ('serviceWorker' in navigator && location.hostname !== 'localhost') {
       });
   });
 }
-  </script>
+</script>
 </body>
 </html>
