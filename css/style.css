@@ -213,9 +213,18 @@ body {
 }
 
 .destination-board thead,
+.destination-board thead select,
 .destination-board tfoot {
   background-color: var(--brand-color);
   color: var(--brand-text-color);
+}
+
+.destination-board thead select {
+  font-size: 1em;
+  border: 0;
+}
+.destination-board thead select:focus {
+  outline: none;
 }
 
 .destination-board th {

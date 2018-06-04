@@ -149,7 +149,32 @@ Vue.component('destination-board', {
   props: {
     trips: Array,
     info: String,
-    from: String
+    from: String,
+  },
+  data() {
+    return {
+      filter: {
+        track: '',
+        dest: ''
+      }
+    };
+  },
+  computed: {
+    tracks() {
+      const tracks = [].concat(this.trips).map(({ track }) => track);
+      return Array.from(new Set(tracks))
+        .sort(sortNumbersAndLetters);
+    },
+    destinations() {
+      const destinations = [].concat(this.trips).map(({ direction }) => direction);
+      return Array.from(new Set(destinations));
+    },
+    filteredTrips() {
+      const { track, dest } = this.filter;
+      return this.trips
+        .filter((t) => (track ? t.track === track : true))
+        .filter((t) => (dest ? t.direction === dest : true));
+    }
   },
   methods: {},
   template: `
@@ -157,14 +182,24 @@ Vue.component('destination-board', {
       <thead>
         <tr>
           <th>Linje</th>
-          <th>Destination</th>
-          <th>Tid</th>
+          <th>
+            <select v-model="filter.dest">
+              <option value="">Destination</option>
+              <option v-for="dest in destinations" :key="dest" :value="dest">{{ dest }}</option>
+            </select>
+          </th>
+          <th>Tid {{ filter.track }}</th>
           <th>Ny tid</th>
-          <th>Hpl</th>
+          <th>
+            <select v-model="filter.track">
+              <option value="">Hpl</option>
+              <option v-for="track in tracks" :key="track" :value="track">{{ track }}</option>
+            </select>
+          </th>
         </tr>
       </thead>
       <tbody>
-        <tr v-for="trip in trips" :key="trip.id">
+        <tr v-for="trip in filteredTrips" :key="trip.id">
           <td class="trip-line" :style="{ backgroundColor: trip.fgColor, color: trip.bgColor }">
             {{ trip.sname }}
           </td>
@@ -430,16 +465,15 @@ Vue.component('station-info', {
       this.lastIntervalId = setInterval(this.getDepartures, 20000);
     },
     getDepartures() {
-      window[this.location.region].getTrafficSituations('stoparea', this.location.id)
-        .then((situations) => {
-          console.log('situations', situations);
-          this.info = situations;
-        });
       window[this.location.region].getDeparturesFrom(this.location.id)
         .then((resp) => {
           this.trips = resp.map(getDestinationVia);
-          console.log('this.trips', this.trips);
+          // console.log('this.trips', this.trips);
           this.isLoading = false;
+        });
+      window[this.location.region].getTrafficSituations('stoparea', this.location.id)
+        .then((situations) => {
+          this.info = situations;
         });
     }
   }
@@ -482,6 +516,14 @@ function getPosition() {
 
     navigator.geolocation.getCurrentPosition(resolve);
   });
+}
+
+function sortNumbersAndLetters(a, b) {
+  const ac = Number(a) || a.charCodeAt(0);
+  const bc = Number(b) || b.charCodeAt(0);
+  if (ac < bc) return -1;
+  if (ac > bc) return 1;
+  return 0;
 }
 </script>
   <script>
