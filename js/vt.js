@@ -10,7 +10,7 @@ window.VT = (function VT() {
   function getTrafficSituations(method, gid) {
     const url = method ? `${trafficSituations}/${method}/${gid}` : trafficSituations;
     return anropaVasttrafik(url, { Accept: 'application/json' })
-      // .then((sit) => (console.log('sit', sit), sit))
+      .then((sit) => (console.log('sit', sit), sit))
       .then((situations) => situations.reduce((res, { title, description, affectedLines }) => ({
         message: `${res.message} ${title} ${description}`,
         affectedLines: [].concat(res.affectedLines, affectedLines.map(({ designation }) => designation))

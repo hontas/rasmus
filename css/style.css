@@ -91,6 +91,7 @@ body {
 }
 
 .location-input input {
+  -webkit-appearance: none;
   border: 1px solid whitesmoke;
   font: inherit;
   left: 0;
@@ -111,13 +112,13 @@ body {
 
 .location-input .location-input__suggestions {
   background: var(--brand-color);
-  font-size: small;
   list-style: none;
-  width: 100%;
+  font-size: 0.875em;
   padding: 0;
   position: absolute;
   top: 1.5em;
   left: 0;
+  width: 100%;
   z-index: 10;
 }
 
@@ -145,15 +146,28 @@ body {
   height: 0;
 }
 
-.location-input .location-input__suggestions a {
+.location-input .location-input__suggestions button {
+  -webkit-appearance: none;
+  background: transparent;
+  border: 0;
   color: white;
   display: block;
-  padding: 0.25em 0.5em;
+  font-size: 1em;
+  padding: 0.5em 0.75em;
+  text-align: left;
   text-decoration: none;
+  width: 100%;
 }
 
-.location-input .location-input__suggestions a:hover,
-.location-input .location-input__suggestions a:focus {
+.location-input .location-input__suggestion:first-child button {
+  padding-top: .75em;
+}
+.location-input .location-input__suggestion:last-child button {
+  padding-bottom: .75em;
+}
+
+.location-input .location-input__suggestions button:hover,
+.location-input .location-input__suggestions button:focus {
   background: whitesmoke;
   color: var(--brand-color);
   outline: none;
@@ -220,6 +234,7 @@ body {
 }
 
 .destination-board thead select {
+  -webkit-appearance: none;
   font-size: 1em;
   border: 0;
 }
@@ -331,4 +346,8 @@ body {
 }
 .tab.active + .tab{
   border-left: none;
+}
+
+.information-page {
+  padding: 1em;
 }

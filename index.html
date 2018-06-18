@@ -56,20 +56,20 @@
       </label>
 
       <ul v-show="show" class="location-input__suggestions">
-        <li v-if="fetchingNearbyStops" @keyup="handleKeyInput">
-          <a href="#" @click.prevent>
+        <li class="location-input__suggestion" v-if="fetchingNearbyStops" @keyup="handleKeyInput">
+          <button @click.prevent>
             Hämtar närliggande hållplatser
             <i class="fa fa-spinner fa-spin"></i>
-          </a>
+          </button>
         </li>
-        <li v-if="suggestions.length === 0 && !searchText" v-for="station in nearbyStations" @keyup="handleKeyInput">
-          <a href="#" @click.prevent="onSelect(station)" @keyup.space="onSelect(station)">{{ station.name }}</a>
+        <li class="location-input__suggestion" v-if="suggestions.length === 0 && !searchText" v-for="station in nearbyStations" @keyup="handleKeyInput">
+          <button @click.prevent="onSelect(station)" @keyup.space="onSelect(station)">{{ station.name }}</button>
         </li>
-        <li v-if="suggestions.length === 0 && searchText && !isFetching">
-          <a href="#" @click.prevent>Inga resultat för söktermen</a>
+        <li class="location-input__suggestion" v-if="suggestions.length === 0 && searchText && !isFetching">
+          <button @click.prevent>Inga resultat för söktermen</button>
         </li>
-        <li v-for="suggestion in suggestions" :key="suggestion.id" @keyup="handleKeyInput">
-          <a href="#" @click.prevent="onSelect(suggestion)" @keyup.space="onSelect(suggestion)">{{ suggestion.name }}</a>
+        <li class="location-input__suggestion" v-for="suggestion in suggestions" :key="suggestion.id" @keyup="handleKeyInput">
+          <button @click.prevent="onSelect(suggestion)" @keyup.space="onSelect(suggestion)">{{ suggestion.name }}</button>
         </li>
       </ul>
     </div>
@@ -80,14 +80,16 @@
   <div id="app">
     <div class="top-nav">
       <ul class="tabs">
-        <li class="tab" :class="{ active: (tab === 1) }" @click="changeTab(1)">Sök resa (resrobot)</li>
+        <!-- <li class="tab" :class="{ active: (tab === 1) }" @click="changeTab(1)">Sök resa (resrobot)</li> -->
         <li class="tab" :class="{ active: (tab === 2) }" @click="changeTab(2)">Avgångar (västtrafik)</li>
+        <li class="tab" :class="{ active: (tab === 3) }" @click="changeTab(3)">Information</li>
       </ul>
       <digital-clock></digital-clock>
     </div>
     <div class="container">
       <search-trip v-if="tab === 1"></search-trip>
       <station-info v-if="tab === 2"></station-info>
+      <information-page v-if="tab === 3"></information-page>
     </div>
   </div>
 
@@ -282,6 +284,10 @@ Vue.component('location-input', {
       .then((stations) => {
         this.nearbyStations = stations;
         this.fetchingNearbyStops = false;
+      })
+      .catch((reason) => {
+        console.error(reason);
+        this.fetchingNearbyStops = false;
       });
   },
   methods: {
@@ -313,6 +319,7 @@ Vue.component('location-input', {
         });
     },
     onSelect(suggestion) {
+      console.log('onSelect', suggestion);
       this.searchText = suggestion.name;
       this.$emit('set-location', suggestion);
       this.hideDropDown();
@@ -464,7 +471,7 @@ Vue.component('station-info', {
   },
   methods: {
     setFrom(location) {
-      // console.log('set location', location);
+      console.log('set location', location);
       this.location = location || {};
       this.isLoading = true;
       this.getDepartures();
@@ -479,7 +486,7 @@ Vue.component('station-info', {
       window[this.location.region].getDeparturesFrom(this.location.id)
         .then((resp) => {
           this.trips = resp.map(getDestinationVia);
-          // console.log('this.trips', this.trips);
+          console.log('this.trips', this.trips);
           this.isLoading = false;
         });
       window[this.location.region].getTrafficSituations('stoparea', this.location.id)
@@ -488,6 +495,27 @@ Vue.component('station-info', {
         });
     }
   }
+});
+
+Vue.component('information-page', {
+  template: `
+    <section class="information-page">
+      <div id="gdoc"></div>
+      <p>
+        <small>
+          <a href="https://docs.google.com/document/d/1TRE1P4EmB3kwlURit8lICniBtRp7aqnhcU8x7D6yzqI/edit#">Redigera</a>
+        </small>
+      </p>
+    </section>
+  `,
+  data() {
+    return {};
+  },
+  computed: {},
+  created() {
+    getTheGoogleStuffs()
+  },
+  methods: {}
 });
 
 const viaRegExp = /\s*via\s*/;
@@ -527,7 +555,7 @@ function getPosition() {
     if (!('geolocation' in navigator)) {
       reject();
     } else {
-      navigator.geolocation.getCurrentPosition(resolve);
+      navigator.geolocation.getCurrentPosition(resolve, reject);
     }
   });
 }
@@ -541,16 +569,21 @@ function sortNumbersAndLetters(a, b) {
 }
 </script>
 <script>
-if ('serviceWorker' in navigator && window.location.hostname !== 'localhost') {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js')
-      .then((registration) => {
-        console.log('ServiceWorker registration successful with scope: ', registration.scope);
-      }, (err) => {
-        console.log('ServiceWorker registration failed: ', err);
-      });
-  });
-}
+// if ('serviceWorker' in navigator && window.location.hostname !== 'localhost') {
+//   window.addEventListener('load', () => {
+//     navigator.serviceWorker.register('sw.js')
+//       .then((registration) => {
+//         console.log('ServiceWorker registration successful with scope: ', registration.scope);
+//       }, (err) => {
+//         console.log('ServiceWorker registration failed: ', err);
+//       });
+//   });
+// }
+</script>
+<script src="js/googleDriveAPI.js"></script>
+<script async defer src="https://apis.google.com/js/api.js"
+  onload="this.onload=function(){};handleClientLoad()"
+  onreadystatechange="if (this.readyState === 'complete') this.onload()">
 </script>
 </body>
 </html>
