@@ -6,6 +6,7 @@
 
 html {
   box-sizing: border-box;
+  height: 100%;
 }
 
 *, *:before, *:after {
@@ -15,8 +16,14 @@ html {
 body {
   font-family: system-ui, Helvetica Neue, sans-serif;
   color: var(--brand-color);
+  height: 100%;
   margin: 0;
   padding: 0;
+}
+
+#app,
+.container {
+  height: 100%;
 }
 
 .form {
@@ -349,5 +356,14 @@ body {
 }
 
 .information-page {
+  height: 100%;
   padding: 1em;
+  position: relative;
+}
+.information-page__edit-link {
+  color: whitesmoke;
+  font-size: smaller;
+  position: absolute;
+  bottom: 1em;
+  left: 1em;
 }
