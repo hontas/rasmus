@@ -21,7 +21,11 @@ body {
   padding: 0;
 }
 
-#app,
+#app {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
 .container {
   height: 100%;
 }
