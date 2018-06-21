@@ -177,7 +177,7 @@ Vue.component('destination-board', {
     },
     filteredTrips() {
       const { track, dest } = this.filter;
-      const { affectedLines } = this.info;
+      const { affectedLines = [] } = this.info;
       return this.trips
         .map((trip) => ({
           ...trip,
@@ -185,6 +185,9 @@ Vue.component('destination-board', {
         }))
         .filter((t) => (track ? t.track === track : true))
         .filter((t) => (dest ? t.direction === dest : true));
+    },
+    message() {
+      return this.info.message || "Inga trafikstörningar.";
     }
   },
   methods: {},
@@ -230,7 +233,7 @@ Vue.component('destination-board', {
       </tbody>
       <tfoot v-if="from">
         <tr>
-          <td colspan="5"><p>{{ info.message }}</p></td>
+          <td colspan="5"><p>{{ this.message }}</p></td>
         </tr>
       </tfoot>
     </div>
