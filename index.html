@@ -31,7 +31,7 @@
         <i v-if="!initialized" class="fa fa-spin fa-spinner"></i>
         <location-input locationApi="VT" displayNearbyStops label="Från" :parentLoading="isLoading" :disabled="!initialized" @set-location="setFrom"></location-input>
       </div>
-      <destination-board :trips="trips" :info="info" :from="location.name"></destination-board>
+      <destination-board :isLoading="isLoading" :trips="trips" :info="info" :from="location.name"></destination-board>
     </div>
   </script>
 
@@ -154,6 +154,7 @@ Vue.component('digital-clock', {
 Vue.component('destination-board', {
   props: {
     trips: Array,
+    isLoading: Boolean,
     info: {
       message: String,
       affectedLines: Array
@@ -230,7 +231,13 @@ Vue.component('destination-board', {
           <td class="trip-time is-late"><span v-if="trip.isLate">{{ trip.rtTime }}</span></td>
           <td class="trip-track">{{ trip.track }}</td>
         </tr>
-        <tr v-show="from && trips.length === 0">
+        <tr v-show="isLoading">
+          <td colspan="5">
+            Hämtar avgångar...
+            <i class="fa fa-spin fa-spinner" aria-hidden="true"></i>
+          </td>
+        </tr>
+        <tr v-show="!isLoading && from && trips.length === 0">
           <td colspan="5">Inga resor att visa</td>
         </tr>
       </tbody>
@@ -498,6 +505,9 @@ Vue.component('station-info', {
         .then((resp) => {
           this.trips = resp.map(getDestinationVia);
           console.log('this.trips', this.trips);
+          this.isLoading = false;
+        })
+        .catch(() => {
           this.isLoading = false;
         });
       window[this.location.region].getTrafficSituations('stoparea', this.location.id)
