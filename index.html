@@ -111,6 +111,9 @@
   <script type="text/javascript" src="js/vendor/vue.js"></script>
   <script src="js/vendor/jquery-3.2.1.slim.min.js"></script>
   <script src="js/vendor/moment.js"></script>
+  <!-- <script src="https://www.gstatic.com/firebasejs/5.3.0/firebase-app.js"></script> -->
+  <!-- <script src="https://www.gstatic.com/firebasejs/5.3.0/firebase-auth.js"></script> -->
+  <!-- <script src="js/firebase.js"></script> -->
   <!-- <script src="js/trafikMeddelanden.js"></script> -->
   <script src="js/vt.js"></script>
   <script src="js/sl.js"></script>
@@ -338,15 +341,20 @@ Vue.component('location-input', {
         ArrowUp: 'previousElementSibling',
         ArrowDown: 'nextElementSibling'
       };
+      const btnElement = 'button';
 
       const getSibling = (el) => el.parentElement[dict[e.key]];
 
       if (['ArrowDown', 'ArrowUp'].includes(e.key) && this.show && this.hasSuggestions) {
-        const focused = this.$el.querySelector('.location-input__suggestions a:focus');
-        if (!focused) return this.$el.querySelector('.location-input__suggestions a').focus();
-        const next = getSibling(focused);
-        if (!next) return;
-        next.querySelector('a').focus();
+        const focused = this.$el.querySelector(`.location-input__suggestions ${btnElement}:focus`);
+        if (focused) {
+          const next = getSibling(focused);
+          if (next) {
+            next.querySelector(btnElement).focus();
+          }
+        } else {
+          this.$el.querySelector(`.location-input__suggestions ${btnElement}`).focus();
+        }
       }
     },
     showDropDown() {
