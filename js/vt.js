@@ -59,6 +59,7 @@ window.VT = (function VT() {
           return Object.assign({}, trip, {
             name: trip.sname || trip.name,
             region: 'VT',
+            cancelled: Boolean(trip.cancelled),
             isLate
           });
         });

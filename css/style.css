@@ -272,6 +272,10 @@ body {
   text-align: center;
   width: 50px;
 }
+
+.destination-board .trip--cancelled .trip-dest-name {
+  text-decoration: line-through;
+}
 .destination-board .trip-dest {}
 .destination-board .trip-dest-name {
   font-weight: 500;

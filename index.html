@@ -207,7 +207,6 @@ Vue.component('destination-board', {
             </select>
           </th>
           <th>Tid {{ filter.track }}</th>
-          <th>Ny tid</th>
           <th>
             <select v-model="filter.track">
               <option value="">Hpl</option>
@@ -217,33 +216,36 @@ Vue.component('destination-board', {
         </tr>
       </thead>
       <tbody>
-        <tr v-for="trip in filteredTrips" :key="trip.id">
+        <tr v-for="trip in filteredTrips" :key="trip.id" :class="{ 'trip--cancelled': trip.cancelled }">
           <td class="trip-line" :style="{ backgroundColor: trip.fgColor, color: trip.bgColor }">
             {{ trip.sname }}
           </td>
           <td class="trip-dest">
-            <div class="trip-dest-name">
-              {{ trip.direction }}&nbsp;<span v-if="trip.isAffected">⛔️</span>
+            <div>
+              <span class="trip-dest-name">
+                {{ trip.direction }}
+              </span>
+              <span v-if="trip.isAffected">&nbsp;⛔️</span>
+              <span v-if="trip.cancelled">&nbsp;(inställd)</span>
             </div>
             <div class="trip-dest-via"><small v-if="trip.via"> via {{ trip.via }}</small></div>
           </td>
-          <td class="trip-time">{{ trip.time }}</td>
-          <td class="trip-time is-late"><span v-if="trip.isLate">{{ trip.rtTime }}</span></td>
+          <td class="trip-time" :class="{ 'is-late': trip.isLate }">{{ trip.rtTime || trip.time }}</td>
           <td class="trip-track">{{ trip.track }}</td>
         </tr>
         <tr v-show="isLoading">
-          <td colspan="5">
+          <td colspan="4">
             Hämtar avgångar...
             <i class="fa fa-spin fa-spinner" aria-hidden="true"></i>
           </td>
         </tr>
         <tr v-show="!isLoading && from && trips.length === 0">
-          <td colspan="5">Inga resor att visa</td>
+          <td colspan="4">Inga resor att visa</td>
         </tr>
       </tbody>
       <tfoot v-if="from">
         <tr>
-          <td colspan="5"><p>{{ this.message }}</p></td>
+          <td colspan="4"><p>{{ this.message }}</p></td>
         </tr>
       </tfoot>
     </div>
