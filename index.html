@@ -191,7 +191,7 @@ Vue.component('destination-board', {
         .filter((t) => (dest ? t.direction === dest : true));
     },
     message() {
-      return this.info.message || "Inga trafikstörningar.";
+      return this.info.message || 'Inga trafikstörningar.';
     }
   },
   methods: {},
@@ -226,7 +226,7 @@ Vue.component('destination-board', {
                 {{ trip.direction }}
               </span>
               <span v-if="trip.isAffected">&nbsp;⛔️</span>
-              <span v-if="trip.cancelled">&nbsp;(inställd)</span>
+              <span v-if="trip.cancelled">&nbsp;⚠️ Färd inställd</span>
             </div>
             <div class="trip-dest-via"><small v-if="trip.via"> via {{ trip.via }}</small></div>
           </td>
@@ -495,12 +495,18 @@ Vue.component('station-info', {
       this.location = location || {};
       this.isLoading = true;
       this.getDepartures();
-
-      // refresh list every 20 seconds
-      if (this.lastIntervalId) {
-        clearInterval(this.lastIntervalId);
+      this.refreshDepartures();
+    },
+    refreshDepartures() {
+      if (this.lastTimeoutId) {
+        clearTimeout(this.lastTimeoutId);
       }
-      this.lastIntervalId = setInterval(this.getDepartures, 20000);
+      window.requestAnimationFrame(() => {
+        this.lastTimeoutId = setTimeout(() => {
+          this.getDepartures();
+          this.refreshDepartures();
+        }, 20000);
+      });
     },
     getDepartures() {
       window[this.location.region].getDeparturesFrom(this.location.id)
