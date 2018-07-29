@@ -69,7 +69,7 @@ body {
 }
 
 .location-input {
-  --left-offset: 60px;
+  --left-offset: 80px;
   position: relative;
   line-height: 2em;
   margin: .5em 0;
@@ -228,66 +228,76 @@ body {
 .trip__dest {
   line-height: 1.5em;
 }
-
-.destination-board {
+.trips-table {
+  width: 100%;
+}
+.trips-table__filter {
+  display: flex;
+  margin: 0 0 .5em;
+  list-style-type: none;
+  padding-left: 0;
+}
+.trips-table__filter li {
+  margin-left: .5em;
+}
+.trips-table table {
   background-color: white;
   border: 0;
   border-collapse: collapse;
   color: rgb(0, 57, 77);
   width: 100%;
 }
-
-.destination-board thead,
-.destination-board thead select,
-.destination-board tfoot {
+.trips-table thead,
+.trips-table thead select,
+.trips-table tfoot {
   background-color: var(--brand-color);
   color: var(--brand-text-color);
 }
 
-.destination-board thead select {
+.trips-table thead select {
   -webkit-appearance: none;
   font-size: 1em;
   border: 0;
 }
-.destination-board thead select:focus {
+.trips-table thead select:focus {
   outline: none;
 }
 
-.destination-board th {
+.trips-table th {
   font-weight: normal;
   text-align: left;
 }
 
-.destination-board tbody tr:nth-child(even) {
+.trips-table tbody tr:nth-child(even) {
   background: #EEE;
 }
 
-.destination-board td,
-.destination-board th {
+.trips-table td,
+.trips-table th {
   padding: .5em;
 }
 
-.destination-board .trip-line {
+.trips-table .trip-line {
   padding: .5em;
   text-align: center;
   width: 50px;
 }
 
-.destination-board .trip--cancelled .trip-dest-name {
+.trips-table .trip--cancelled .trip-dest-name {
   text-decoration: line-through;
 }
-.destination-board .trip-dest {}
-.destination-board .trip-dest-name {
+.trips-table .trip-dest {}
+.trips-table .trip-dest-name {
   font-weight: 500;
 }
-.destination-board .trip-dest-via {}
-.destination-board .trip-time {
+.trips-table .trip-dest-via {}
+.trips-table .trip-time {
   width: 60px;
 }
-.destination-board .trip-time.is-late {
+.trips-table .trip-time.is-late {
   color: var(--brand-color);
 }
-.destination-board .trip-track {
+.trips-table .trip-track {
   text-align: center;
   width: 50px;
 }

@@ -13,7 +13,9 @@
   <script type="text/x-template" id="search-trip">
     <div class="search-trip">
       <div class="form">
-        <i v-if="!initialized" class="fa fa-spin fa-spinner"></i>
+        <p v-if="!initialized">
+          Initierar... <i class="fa fa-spin fa-spinner"></i>
+        </p>
         <location-input displayNearbyStops locationApi="RR" label="Från" :parentLoading="isLoading" :disabled="!initialized" @set-location="setFrom"></location-input>
         <location-input locationApi="RR" label="Till" :parentLoading="isLoading" :disabled="!initialized" @set-location="setDest"></location-input>
         <button class="btn" @click="findTrip" :disabled="!from || !dest">
@@ -28,10 +30,12 @@
   <script type="text/x-template" id="station-info">
     <div class="station-info">
       <div class="form">
-        <i v-if="!initialized" class="fa fa-spin fa-spinner"></i>
-        <location-input locationApi="VT" displayNearbyStops label="Från" :parentLoading="isLoading" :disabled="!initialized" @set-location="setFrom"></location-input>
+        <p v-if="!initialized">
+          Initierar... <i class="fa fa-spin fa-spinner"></i>
+        </p>
+        <location-input locationApi="VT" displayNearbyStops label="Hållplats" :parentLoading="isLoading" :disabled="!initialized" @set-location="setFrom"></location-input>
       </div>
-      <destination-board :isLoading="isLoading" :trips="trips" :info="info" :from="location.name"></destination-board>
+      <trips-table :arrivals="arrivals" :isLoading="isLoading" :trips="trips" :info="info" :from="location.name"></trips-table>
     </div>
   </script>
 
@@ -50,7 +54,7 @@
           @keyup.enter="selectFirstSuggestion"
           @keyup="handleKeyInput"
           type="search"
-          placeholder="Hållplats"
+          placeholder=""
           :disabled="disabled">
         <i class="fa fa-spin" :class="{ 'fa-spinner': isLoading }" aria-hidden="true"></i>
       </label>
@@ -82,14 +86,16 @@
       <ul class="tabs">
         <!-- <li class="tab" :class="{ active: (tab === 1) }" @click="changeTab(1)">Sök resa (resrobot)</li> -->
         <li class="tab" :class="{ active: (tab === 2) }" @click="changeTab(2)">Avgångar (västtrafik)</li>
-        <li class="tab" :class="{ active: (tab === 3) }" @click="changeTab(3)">Information</li>
+        <li class="tab" :class="{ active: (tab === 3) }" @click="changeTab(3)">Ankomster (västtrafik)</li>
+        <li class="tab" :class="{ active: (tab === 4) }" @click="changeTab(4)">Information</li>
       </ul>
       <digital-clock></digital-clock>
     </div>
     <div class="container">
       <search-trip v-if="tab === 1"></search-trip>
       <station-info v-if="tab === 2"></station-info>
-      <information-page v-if="tab === 3"></information-page>
+      <station-info v-if="tab === 3" arrivals></station-info>
+      <information-page v-if="tab === 4"></information-page>
     </div>
   </div>
 
@@ -151,7 +157,7 @@ Vue.component('digital-clock', {
   `
 });
 
-Vue.component('destination-board', {
+Vue.component('trips-table', {
   props: {
     trips: Array,
     isLoading: Boolean,
@@ -160,6 +166,7 @@ Vue.component('destination-board', {
       affectedLines: Array
     },
     from: String,
+    arrivals: Boolean
   },
   data() {
     return {
@@ -176,7 +183,7 @@ Vue.component('destination-board', {
         .sort(sortNumbersAndLetters);
     },
     destinations() {
-      const destinations = [].concat(this.trips).map(({ direction }) => direction);
+      const destinations = [].concat(this.trips).map(({ direction, origin }) => direction || origin);
       return Array.from(new Set(destinations));
     },
     filteredTrips() {
@@ -188,66 +195,70 @@ Vue.component('destination-board', {
           isAffected: affectedLines.includes(trip.sname)
         }))
         .filter((t) => (track ? t.track === track : true))
-        .filter((t) => (dest ? t.direction === dest : true));
+        .filter(({ direction, origin }) => (dest ? (direction === dest || origin === dest) : true));
     },
     message() {
       return this.info.message || 'Inga trafikstörningar.';
+    },
+    fromToLabel() {
+      return this.arrivals ? 'Från' : 'Till';
     }
   },
   methods: {},
   template: `
-    <table class="destination-board">
-      <thead>
-        <tr>
-          <th>Linje</th>
-          <th>
-            <select v-model="filter.dest">
-              <option value="">Destination</option>
-              <option v-for="dest in destinations" :key="dest" :value="dest">{{ dest }}</option>
-            </select>
-          </th>
-          <th>Tid {{ filter.track }}</th>
-          <th>
-            <select v-model="filter.track">
-              <option value="">Hpl</option>
-              <option v-for="track in tracks" :key="track" :value="track">{{ track }}</option>
-            </select>
-          </th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="trip in filteredTrips" :key="trip.id" :class="{ 'trip--cancelled': trip.cancelled }">
-          <td class="trip-line" :style="{ backgroundColor: trip.fgColor, color: trip.bgColor }">
-            {{ trip.sname }}
-          </td>
-          <td class="trip-dest">
-            <div>
-              <span class="trip-dest-name">
-                {{ trip.direction }}
-              </span>
-              <span v-if="trip.isAffected">&nbsp;⛔️</span>
-              <span v-if="trip.cancelled">&nbsp;⚠️ Färd inställd</span>
-            </div>
-            <div class="trip-dest-via"><small v-if="trip.via"> via {{ trip.via }}</small></div>
-          </td>
-          <td class="trip-time" :class="{ 'is-late': trip.isLate }">{{ trip.rtTime || trip.time }}</td>
-          <td class="trip-track">{{ trip.track }}</td>
-        </tr>
-        <tr v-show="isLoading">
-          <td colspan="4">
-            Hämtar avgångar...
-            <i class="fa fa-spin fa-spinner" aria-hidden="true"></i>
-          </td>
-        </tr>
-        <tr v-show="!isLoading && from && trips.length === 0">
-          <td colspan="4">Inga resor att visa</td>
-        </tr>
-      </tbody>
-      <tfoot v-if="from">
-        <tr>
-          <td colspan="4"><p>{{ this.message }}</p></td>
-        </tr>
-      </tfoot>
+    <div class="trips-table">
+      <ul class="trips-table__filter" v-if="filteredTrips.length">
+        <li>Filter:</li>
+        <li>
+          <select v-model="filter.dest">
+            <option value="">{{ this.fromToLabel }}</option>
+            <option v-for="dest in destinations" :key="dest" :value="dest">{{ dest }}</option>
+          </select>
+        </li>
+      </ul>
+      <table>
+        <thead>
+          <tr>
+            <th>Linje</th>
+            <th>{{ this.fromToLabel }}</th>
+            <th>Tid {{ filter.track }}</th>
+            <th>Hpl</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="trip in filteredTrips" :key="trip.id" :class="{ 'trip--cancelled': trip.cancelled }">
+            <td class="trip-line" :style="{ backgroundColor: trip.fgColor, color: trip.bgColor }">
+              {{ trip.sname }}
+            </td>
+            <td class="trip-dest">
+              <div>
+                <span class="trip-dest-name">
+                  {{ trip.direction || trip.origin }}
+                </span>
+                <span v-if="trip.isAffected">&nbsp;⛔️</span>
+                <span v-if="trip.cancelled">&nbsp;⚠️ Färd inställd</span>
+              </div>
+              <div class="trip-dest-via"><small v-if="trip.via"> via {{ trip.via }}</small></div>
+            </td>
+            <td class="trip-time" :class="{ 'is-late': trip.isLate }">{{ trip.rtTime || trip.time }}</td>
+            <td class="trip-track">{{ trip.track }}</td>
+          </tr>
+          <tr v-show="isLoading">
+            <td colspan="4">
+              Hämtar {{ this.arrivals ? 'ankomster' : 'avgångar' }}...
+              <i class="fa fa-spin fa-spinner" aria-hidden="true"></i>
+            </td>
+          </tr>
+          <tr v-show="!isLoading && from && trips.length === 0">
+            <td colspan="4">Inga resor att visa</td>
+          </tr>
+        </tbody>
+        <tfoot v-if="from">
+          <tr>
+            <td colspan="4"><p>{{ this.message }}</p></td>
+          </tr>
+        </tfoot>
+      </table>
     </div>
   `
 });
@@ -469,6 +480,9 @@ Vue.component('search-trip', {
 
 Vue.component('station-info', {
   template: '#station-info',
+  props: {
+    arrivals: Boolean
+  },
   data() {
     return {
       location: {},
@@ -481,6 +495,11 @@ Vue.component('station-info', {
   computed: {
     show() {
       return !!this.trips.length;
+    },
+    method() {
+      return this.arrivals ?
+        window[this.location.region].getArrivalsTo :
+        window[this.location.region].getDeparturesFrom;
     }
   },
   created() {
@@ -489,18 +508,24 @@ Vue.component('station-info', {
         this.initialized = true;
       });
   },
+  watch: {
+    arrivals(newVal, oldVal) {
+      if (newVal !== oldVal) {
+        this.trips = [];
+        this.info = '';
+        this.getDepartures();
+      }
+    }
+  },
   methods: {
     setFrom(location) {
       console.log('set location', location);
       this.location = location || {};
-      this.isLoading = true;
       this.getDepartures();
       this.refreshDepartures();
     },
     refreshDepartures() {
-      if (this.lastTimeoutId) {
-        clearTimeout(this.lastTimeoutId);
-      }
+      clearTimeout(this.lastTimeoutId);
       window.requestAnimationFrame(() => {
         this.lastTimeoutId = setTimeout(() => {
           this.getDepartures();
@@ -509,13 +534,15 @@ Vue.component('station-info', {
       });
     },
     getDepartures() {
-      window[this.location.region].getDeparturesFrom(this.location.id)
+      this.isLoading = true;
+      this.method(this.location.id)
         .then((resp) => {
           this.trips = resp.map(getDestinationVia);
           console.log('this.trips', this.trips);
           this.isLoading = false;
         })
-        .catch(() => {
+        .catch((reason) => {
+          console.warn('reason', reason);
           this.isLoading = false;
         });
       window[this.location.region].getTrafficSituations('stoparea', this.location.id)
@@ -538,7 +565,7 @@ Vue.component('information-page', {
   },
   computed: {},
   created() {
-    getTheGoogleStuffs()
+    window.getTheGoogleStuffs();
   },
   methods: {}
 });

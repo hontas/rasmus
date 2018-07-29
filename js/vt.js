@@ -36,9 +36,45 @@ window.VT = (function VT() {
       })));
   }
 
+  function transformTrips(trips) {
+    return trips.map((trip) => {
+      const isLate = trip.rtTime && trip.rtTime !== trip.time;
+      // const journeyDetail = await anropaVasttrafik(trip.JourneyDetailRef.ref);
+      return Object.assign({}, trip, {
+        name: trip.sname || trip.name,
+        region: 'VT',
+        cancelled: Boolean(trip.cancelled),
+        isLate
+      });
+    });
+  }
+
+  function filterSimilar(trips) {
+    return trips.filter((item, pos) => {
+      const similar = trips.find((trip) => (trip.name === item.name && trip.time === item.time));
+      return !similar || trips.indexOf(similar) === pos;
+    });
+  }
+
+  function getArrivalsTo(id) {
+    const now = (new Date()).toISOString();
+    const date = now.substr(0, 10);
+    const time = now.substr(11, 5);
+    const requestUrl = `${travelPlanner}/arrivalBoard?id=${encodeURIComponent(id)}&date=${encodeURIComponent(date)}&time=${encodeURIComponent(time)}&format=json`;
+    return getTimeTable(id, requestUrl)
+      .then((json) => json.ArrivalBoard.Arrival)
+      .then(transformTrips);
+  }
+
   function getDeparturesFrom(id) {
     const requestUrl = `${travelPlanner}/departureBoard?id=${encodeURIComponent(id)}&format=json`;
+    return getTimeTable(id, requestUrl)
+      .then((json) => json.DepartureBoard.Departure)
+      // .then(filterSimilar)
+      .then(transformTrips);
+  }
 
+  function getTimeTable(id, requestUrl) {
     return anropaVasttrafik(requestUrl)
       .then((res) => {
         const { error, errorText } = res;
@@ -46,23 +82,6 @@ window.VT = (function VT() {
           console.log('Error:', error || errorText);
         }
         return res;
-      })
-      .then((json) => asArray(json.DepartureBoard.Departure))
-      .then((trips) => trips.filter((item, pos) => {
-        const similar = trips.find((trip) => (trip.name === item.name && trip.time === item.time))
-        return !similar || trips.indexOf(similar) === pos;
-      }))
-      .then((trips) => {
-        return trips.map((trip) => {
-          const isLate = trip.rtTime && trip.rtTime !== trip.time;
-          // const journeyDetail = await anropaVasttrafik(trip.JourneyDetailRef.ref);
-          return Object.assign({}, trip, {
-            name: trip.sname || trip.name,
-            region: 'VT',
-            cancelled: Boolean(trip.cancelled),
-            isLate
-          });
-        });
       });
   }
 
@@ -138,6 +157,7 @@ window.VT = (function VT() {
     findStops,
     getTripSuggestion,
     getDeparturesFrom,
+    getArrivalsTo,
     getTrafficSituations
   };
 }());
