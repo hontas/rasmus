@@ -84,7 +84,6 @@
   <div id="app">
     <div class="top-nav">
       <ul class="tabs">
-        <!-- <li class="tab" :class="{ active: (tab === 1) }" @click="changeTab(1)">Sök resa (resrobot)</li> -->
         <li class="tab" :class="{ active: (tab === 2) }" @click="changeTab(2)">Avgångar (västtrafik)</li>
         <li class="tab" :class="{ active: (tab === 3) }" @click="changeTab(3)">Ankomster (västtrafik)</li>
         <li class="tab" :class="{ active: (tab === 4) }" @click="changeTab(4)">Information</li>
@@ -92,27 +91,11 @@
       <digital-clock></digital-clock>
     </div>
     <div class="container">
-      <search-trip v-if="tab === 1"></search-trip>
       <station-info v-if="tab === 2"></station-info>
       <station-info v-if="tab === 3" arrivals></station-info>
       <information-page v-if="tab === 4"></information-page>
     </div>
   </div>
-
-  <!-- <ul class="trafik-info">
-    <li>
-      <div id="trafiken" class="trafiken-gbg">
-        <h3></h3>
-        <audio controls autoplay="true" />
-      </div>
-    </li>
-    <li>
-      <div id="trafiken" class="trafiken-sthlm">
-        <h3></h3>
-        <audio controls autoplay="true" />
-      </div>
-    </li>
-  </ul> -->
 
   <script type="text/javascript" src="js/vendor/vue.js"></script>
   <script src="js/vendor/jquery-3.2.1.slim.min.js"></script>
@@ -126,7 +109,7 @@
   <script src="js/tv.js"></script>
   <script src="js/resrobot.js"></script>
   <script>
-/* global Vue, VT, RR */
+/* global Vue, VT */
 const positionPromise = getPosition()
   .then(({ coords: { latitude: lat, longitude: long }}) => ({ lat, long }));
 
@@ -392,92 +375,6 @@ Vue.component('location-input', {
   template: '#location-input'
 });
 
-Vue.component('trips-list', {
-  props: {
-    trips: Array
-  },
-  template: `
-    <ul class="trips" v-if="trips.length">
-      <li v-for="trip in trips">
-        <trips-item :trip="trip">
-      </li>
-    </ul>
-  `
-});
-
-Vue.component('trips-item', {
-  props: {
-    trip: Object
-  },
-  methods: {
-    isLast(index, trip) {
-      return index === trip.length - 1;
-    }
-  },
-  template: `
-    <article class="trip">
-      <header>
-        <h1>{{ trip.departs }} » {{ trip.arrives }}</h1>
-        <p class="trip__duration">Restid {{ trip.duration }}</p>
-      </header>
-      <main>
-        <ul class="trip__short-legs">
-          <li class="trip__short-leg" v-for="leg in trip.legs">
-            <span :class="leg.type"></span>
-          </li>
-        </ul>
-        <p>{{ trip.legs.length - 1 }} byte</p>
-      </main>
-      <div class="trip__details" v-show="display-details">
-        <ul class="trip__legs">
-          <li class="trip__leg" :class="leg.type" v-for="(leg, index) in trip.legs">
-            {{ leg.text }} <br/>
-            <span class="trip__dest" v-if="isLast(index, trip)">
-              ⇥ {{ leg.to.time }}
-            </span>
-          </li>
-        </ul>
-      </div>
-    </article>
-  `
-});
-
-Vue.component('search-trip', {
-  template: '#search-trip',
-  data() {
-    return {
-      from: null,
-      dest: null,
-      isLoading: false,
-      trips: [],
-      initialized: false
-    };
-  },
-  created() {
-    VT.init()
-      .then(() => {
-        this.initialized = true;
-      });
-  },
-  methods: {
-    setFrom(location) {
-      this.from = location.id;
-    },
-    setDest(location) {
-      this.dest = location.id;
-      if (this.from) this.findTrip();
-    },
-    findTrip() {
-      this.isLoading = true;
-      RR.getTripSuggestion(this.from, this.dest)
-        .then((trips) => {
-          this.trips = trips;
-          this.isLoading = false;
-        });
-    }
-  }
-});
-
 Vue.component('station-info', {
   template: '#station-info',
   props: {
@@ -513,7 +410,9 @@ Vue.component('station-info', {
       if (newVal !== oldVal) {
         this.trips = [];
         this.info = '';
-        this.getDepartures();
+        if (this.location.region) {
+          this.getDepartures();
+        }
       }
     }
   },
