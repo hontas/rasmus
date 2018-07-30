@@ -1,4 +1,3 @@
-/* globals moment */
 // Västtrafik api
 
 window.VT = (function VT() {
@@ -18,8 +17,9 @@ window.VT = (function VT() {
   }
 
   function getTripSuggestion(from, dest) {
-    const date = moment().format('YYYY-MM-DD');
-    const time = moment().format('HH:mm');
+    const now = new Date();
+    const date = now.toISOString().substr(0, 10);
+    const time = now.toLocaleTimeString().substr(0, 5);
     const tripUrl = `${travelPlanner}/trip?originId=${from}&destId=${dest}&date=${date}&time=${time}&format=json`;
     return anropaVasttrafik(tripUrl)
       .then((json) =>
@@ -57,9 +57,9 @@ window.VT = (function VT() {
   }
 
   function getArrivalsTo(id) {
-    const now = (new Date()).toISOString();
-    const date = now.substr(0, 10);
-    const time = now.substr(11, 5);
+    const now = new Date();
+    const date = now.toISOString().substr(0, 10);
+    const time = now.toLocaleTimeString().substr(0, 5);
     const requestUrl = `${travelPlanner}/arrivalBoard?id=${encodeURIComponent(id)}&date=${encodeURIComponent(date)}&time=${encodeURIComponent(time)}&format=json`;
     return getTimeTable(id, requestUrl)
       .then((json) => json.ArrivalBoard.Arrival)

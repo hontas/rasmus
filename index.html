@@ -99,7 +99,6 @@
 
   <script type="text/javascript" src="js/vendor/vue.js"></script>
   <script src="js/vendor/jquery-3.2.1.slim.min.js"></script>
-  <script src="js/vendor/moment.js"></script>
   <!-- <script src="https://www.gstatic.com/firebasejs/5.3.0/firebase-app.js"></script> -->
   <!-- <script src="https://www.gstatic.com/firebasejs/5.3.0/firebase-auth.js"></script> -->
   <!-- <script src="js/firebase.js"></script> -->
@@ -155,7 +154,8 @@ Vue.component('trips-table', {
     return {
       filter: {
         track: '',
-        dest: ''
+        dest: '',
+        live: true
       }
     };
   },
@@ -188,6 +188,18 @@ Vue.component('trips-table', {
     }
   },
   methods: {},
+  watch: {
+    filter: {
+      handler({ live }) {
+        if (live) {
+          // start refresh
+        } else {
+          // clear refresh timeout
+        }
+      },
+      deep: true
+    }
+  },
   template: `
     <div class="trips-table">
       <ul class="trips-table__filter" v-if="filteredTrips.length">
@@ -197,6 +209,12 @@ Vue.component('trips-table', {
             <option value="">{{ this.fromToLabel }}</option>
             <option v-for="dest in destinations" :key="dest" :value="dest">{{ dest }}</option>
           </select>
+        </li>
+        <li>
+          <label>
+            Live
+            <input type="checkbox" name="live" v-model="filter.live">
+          </label>
         </li>
       </ul>
       <table>
