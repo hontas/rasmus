@@ -26,6 +26,14 @@ body {
   flex-direction: column;
   height: 100%;
 }
+
+.flerp {
+  background-color: yellow;
+  display: flex;
+  align-items: center;
+  height: 30px;
+  padding: 0 1em;
+}
 .container {
   height: 100%;
 }
@@ -184,47 +192,6 @@ body {
   outline: none;
 }
 
-.trips {
-  background-color: lightgray;
-  margin: 0;
-  padding: .5em 0;
-}
-
-.trips, .trip {
-  list-style: none;
-  padding-left: 0;
-}
-
-.trip {
-  background-color: white;
-  border: 1px solid whitesmoke;
-  margin: .5em;
-  padding: .5em;
-}
-
-.trip header,
-.trip main {
-  display: flex;
-  align-items: center;
-}
-
-.trip header {
-  justify-content: space-between;
-}
-
-.trip h1 {
-  margin: 0;
-}
-
-.trip__short-legs {
-  list-style-type: none;
-  padding-left: 0;
-}
-.trip__short-leg {
-  display: inline-block;
-  margin: 0 .5em;
-}
-
 .trip__dest {
   line-height: 1.5em;
 }
@@ -302,27 +269,8 @@ body {
   width: 50px;
 }
 
-.BUS:before {
-  content: '🚌';
-}
-.TRAM:before {
-  content: '🚋';
-}
-
-.JNY:before,
-.REG:before,
-.VAS:before,
-.TRAIN:before {
-  content: '🚅';
-}
-.WALK:before {
-  content: '🚶';
-}
-.SHIP:before {
-  content: '🛳';
-}
-.FERRY:before {
-  content: '⛴';
+.google-map {
+  height: 100%;
 }
 
 .top-nav {

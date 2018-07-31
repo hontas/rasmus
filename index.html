@@ -82,18 +82,21 @@
 <body>
 
   <div id="app">
+    <div v-if="devMode" class="flerp">in development: karta</div>
     <div class="top-nav">
       <ul class="tabs">
         <li class="tab" :class="{ active: (tab === 2) }" @click="changeTab(2)">Avgångar (västtrafik)</li>
         <li class="tab" :class="{ active: (tab === 3) }" @click="changeTab(3)">Ankomster (västtrafik)</li>
-        <li class="tab" :class="{ active: (tab === 4) }" @click="changeTab(4)">Information</li>
+        <li v-if="devMode" class="tab" :class="{ active: (tab === 4) }" @click="changeTab(4)">Karta</li>
+        <li class="tab" :class="{ active: (tab === 5) }" @click="changeTab(5)">Information</li>
       </ul>
       <digital-clock></digital-clock>
     </div>
     <div class="container">
       <station-info v-if="tab === 2"></station-info>
       <station-info v-if="tab === 3" arrivals></station-info>
-      <information-page v-if="tab === 4"></information-page>
+      <google-map v-if="tab === 4"></google-map>
+      <information-page v-if="tab === 5"></information-page>
     </div>
   </div>
 
@@ -108,9 +111,9 @@
   <script src="js/tv.js"></script>
   <script src="js/resrobot.js"></script>
   <script>
-/* global Vue, VT */
+/* global Vue, VT, google */
 const positionPromise = getPosition()
-  .then(({ coords: { latitude: lat, longitude: long }}) => ({ lat, long }));
+  .then(({ coords: { latitude: lat, longitude: long } }) => ({ lat, long }));
 
 Vue.component('digital-clock', {
   data() {
@@ -478,6 +481,59 @@ Vue.component('station-info', {
   }
 });
 
+Vue.component('google-map', {
+  template: `
+    <div class="google-map" id="map">
+    </div>
+  `,
+  data() {
+    return {
+      map: null,
+      vehicles: []
+    };
+  },
+  mounted() {
+    positionPromise.then(({ lat, long: lng }) => {
+      this.map = new google.maps.Map(document.getElementById('map'), {
+        center: { lat, lng },
+        zoom: 10
+      });
+
+      google.maps.event.addListenerOnce(this.map, 'bounds_changed', () => {
+        this.getLiveMap(this.map.getBounds().toJSON());
+      });
+      this.map.addListener('dragend', () => {
+        this.getLiveMap(this.map.getBounds().toJSON());
+      });
+    });
+  },
+  methods: {
+    getLiveMap(coords) {
+      console.log('coords', coords);
+      window.VT.getLiveMap(coords)
+        .then((vehicles) => this.plotVehicles(vehicles));
+    },
+    plotVehicles(vehicles) {
+      console.log('vehicles', vehicles);
+      vehicles.forEach((vehicle) => {
+        const position = {
+          lat: vehicle.x / 1000000,
+          lng: vehicle.y / 1000000
+        };
+        console.log('position', position);
+        const marker = new google.maps.Marker({
+          label: vehicle.name,
+          title: vehicle.name,
+          map: this.map,
+          position,
+          visible: true
+        });
+        console.log('marker', marker);
+      });
+    }
+  }
+});
+
 Vue.component('information-page', {
   template: `
     <section class="information-page">
@@ -510,7 +566,10 @@ function getDestinationVia(departure) {
 // eslint-disable-next-line
 new Vue({
   el: '#app',
-  data: { tab: 2 },
+  data: {
+    tab: 2,
+    devMode: location.hostname === 'localhost'
+  },
   methods: {
     changeTab(tab) {
       this.tab = tab;
@@ -562,5 +621,6 @@ function sortNumbersAndLetters(a, b) {
   onload="this.onload=function(){};handleClientLoad()"
   onreadystatechange="if (this.readyState === 'complete') this.onload()">
 </script>
+<script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAQVyCYvuXOxLcIMlT68G-ELLSxMVDqDGc"></script>
 </body>
 </html>

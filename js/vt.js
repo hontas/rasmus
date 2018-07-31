@@ -85,6 +85,13 @@ window.VT = (function VT() {
       });
   }
 
+  function getLiveMap({ south, west, north, east }) {
+    const getWGS84 = (coord) => Math.round(coord * 1000000);
+    const url = `${travelPlanner}/livemap?minx=${getWGS84(west)}&miny=${getWGS84(south)}&maxx=${getWGS84(east)}&maxy=${getWGS84(north)}&onlyRealtime=yes`;
+    return anropaVasttrafik(url)
+      .then(({ livemap }) => livemap.vehicles);
+  }
+
   function anropaVasttrafik(url, userHeaders) {
     const accessTokenPromise = Promise.resolve();
     const headers = {
@@ -158,6 +165,7 @@ window.VT = (function VT() {
     getTripSuggestion,
     getDeparturesFrom,
     getArrivalsTo,
-    getTrafficSituations
+    getTrafficSituations,
+    getLiveMap
   };
 }());
