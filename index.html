@@ -87,7 +87,7 @@
       <ul class="tabs">
         <li class="tab" :class="{ active: (tab === 2) }" @click="changeTab(2)">Avgångar (västtrafik)</li>
         <li class="tab" :class="{ active: (tab === 3) }" @click="changeTab(3)">Ankomster (västtrafik)</li>
-        <li v-if="devMode" class="tab" :class="{ active: (tab === 4) }" @click="changeTab(4)">Karta</li>
+        <li class="tab" :class="{ active: (tab === 4) }" @click="changeTab(4)">Karta</li>
         <li class="tab" :class="{ active: (tab === 5) }" @click="changeTab(5)">Information</li>
       </ul>
       <digital-clock></digital-clock>
@@ -489,47 +489,102 @@ Vue.component('google-map', {
   data() {
     return {
       map: null,
-      vehicles: []
+      vehicles: [],
+      markers: []
     };
   },
   mounted() {
     positionPromise.then(({ lat, long: lng }) => {
+      console.log('pos', { lat, lng });
       this.map = new google.maps.Map(document.getElementById('map'), {
         center: { lat, lng },
-        zoom: 10
+        zoom: 13
+      });
+
+      new google.maps.Marker({
+        position: { lat, lng },
+        map: this.map,
+        label: 'Du'
       });
 
       google.maps.event.addListenerOnce(this.map, 'bounds_changed', () => {
         this.getLiveMap(this.map.getBounds().toJSON());
       });
-      this.map.addListener('dragend', () => {
-        this.getLiveMap(this.map.getBounds().toJSON());
-      });
+      this.map.addListener('dragend', this.getLiveMap);
+      this.map.addListener('zoom_changed', this.getLiveMap);
+      this.updateMap();
     });
   },
   methods: {
-    getLiveMap(coords) {
-      console.log('coords', coords);
-      window.VT.getLiveMap(coords)
+    updateMap() {
+      window.requestAnimationFrame(() => {
+        setTimeout(() => {
+          this.getLiveMap();
+          this.updateMap();
+        }, 1000 * 10) // every 10 seconds
+      });
+    },
+    getLiveMap() {
+      window.VT.getLiveMap(this.map.getBounds().toJSON())
         .then((vehicles) => this.plotVehicles(vehicles));
     },
     plotVehicles(vehicles) {
       console.log('vehicles', vehicles);
-      vehicles.forEach((vehicle) => {
-        const position = {
-          lat: vehicle.x / 1000000,
-          lng: vehicle.y / 1000000
-        };
-        console.log('position', position);
-        const marker = new google.maps.Marker({
-          label: vehicle.name,
-          title: vehicle.name,
-          map: this.map,
-          position,
-          visible: true
-        });
-        console.log('marker', marker);
+      if (vehicles.length > 100) {
+        vehicles = vehicles.filter(({ name }) => !name.startsWith('Bus'));
+        console.log('too many vehicles, filtering out buses', vehicles.length);
+      }
+
+      const icons = {
+        Bu: 'https://www.barcelona-airport.com/images/icons/bus.png',
+        Sp: 'https://www.barcelona-airport.com/images/icons/metro.png',
+        SJ: 'https://www.barcelona-airport.com/images/icons/tren2.png',
+        'Vä': 'https://www.barcelona-airport.com/images/icons/tren2.png'
+      };
+      const icon = {
+        scaledSize: new google.maps.Size(32, 32),
+        labelOrigin: new google.maps.Point(16, -5),
+        anchor: new google.maps.Point(16, 28)
+      };
+      const getIcon = (label) => ({
+        ...icon,
+        url: icons[label.substr(0,2)] || icons.Bu
       });
+
+      const newMarkers = vehicles
+        .filter(({ gid }) => !this.markers.some(({ title }) => gid === title))
+        .map((vehicle) =>
+          new google.maps.Marker({
+            position: {
+              lat: vehicle.y / 1000000,
+              lng: vehicle.x / 1000000
+            },
+            map: this.map,
+            title: vehicle.gid,
+            label: vehicle.name,
+            animation: google.maps.Animation.DROP,
+            icon: getIcon(vehicle.name)
+          })
+        );
+      const oldMarkers = this.markers
+        .filter((marker) => vehicles.some(({ gid }) => gid === marker.title));
+      oldMarkers
+        .forEach((marker) => {
+          const vehicle = vehicles.find(({ gid }) => gid === marker.title)
+          marker.setPosition({
+            lat: vehicle.y / 1000000,
+            lng: vehicle.x / 1000000
+          });
+        });
+
+      const markersToBeRemoved = this.markers
+        .filter((marker) => !vehicles.some(({ gid }) => gid === marker.title))
+        .forEach((marker) => marker.setMap(null));
+
+      this.markers = [
+        ...oldMarkers,
+        ...newMarkers
+      ];
     }
   }
 });
@@ -551,18 +606,6 @@ Vue.component('information-page', {
   methods: {}
 });
 
-const viaRegExp = /\s*via\s*/;
-function getDestinationVia(departure) {
-  if (viaRegExp.test(departure.direction)) {
-    const [direction, via] = departure.direction.split(viaRegExp);
-    return Object.assign({}, departure, {
-      direction,
-      via
-    });
-  }
-  return departure;
-}
-
 // eslint-disable-next-line
 new Vue({
   el: '#app',
@@ -576,6 +619,18 @@ new Vue({
     }
   }
 });
+
+const viaRegExp = /\s*via\s*/;
+function getDestinationVia(departure) {
+  if (viaRegExp.test(departure.direction)) {
+    const [direction, via] = departure.direction.split(viaRegExp);
+    return Object.assign({}, departure, {
+      direction,
+      via
+    });
+  }
+  return departure;
+}
 
 function debounce(fn, delay, context) {
   let timeoutId;
