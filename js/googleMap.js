@@ -1,18 +1,18 @@
 window.gMap = (function iife() {
   let map;
   const icons = {
-    BUS: 'https://www.barcelona-airport.com/images/icons/bus.png',
-    TRAM: 'https://www.barcelona-airport.com/images/icons/metro.png',
+    BOAT: 'https://rrp.vasttrafik.se/img/build/products/haf_prod_ship.svg',
+    BUS: 'https://rrp.vasttrafik.se/img/build/products/haf_prod_bus.svg',
     TAXI: 'https://image.flaticon.com/icons/png/128/75/75780.png',
-    LDT: 'https://www.barcelona-airport.com/images/icons/tren2.png', // long distance train
-    REG: 'https://www.barcelona-airport.com/images/icons/tren2.png', // regionaltåg
-    VAS: 'https://www.barcelona-airport.com/images/icons/tren2.png', // västtågen
-    BOAT: 'https://www.materialui.co/materialIcons/maps/directions_ferry_black_192x192.png'
+    TRAM: 'https://rrp.vasttrafik.se/img/build/products/haf_prod_tram.svg',
+    LDT: 'https://rrp.vasttrafik.se/img/build/products/haf_prod_ic.svg', // long distance train
+    REG: 'https://rrp.vasttrafik.se/img/build/products/haf_prod_ic.svg', // regionaltåg
+    VAS: 'https://rrp.vasttrafik.se/img/build/products/haf_prod_ice.svg' // västtågen
   };
   const icon = {
-    scaledSize: new google.maps.Size(32, 32),
-    labelOrigin: new google.maps.Point(16, -8),
-    anchor: new google.maps.Point(16, 28)
+    scaledSize: new google.maps.Size(20, 20),
+    labelOrigin: new google.maps.Point(10, -8),
+    anchor: new google.maps.Point(10, 10)
   };
 
   const getIcon = (prodtype) => ({
@@ -65,7 +65,6 @@ window.gMap = (function iife() {
       position: fromWGS84(y, x),
       map,
       title: vehicle.gid,
-      label: name,
       icon: getIcon(prodclass)
     });
 
