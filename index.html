@@ -523,18 +523,15 @@ Vue.component('google-map', {
         .filter(({ gid }) => !this.markers.some(({ title }) => gid === title))
         .map(window.gMap.createVehicleMarker);
 
-      const oldMarkers = this.markers
-        .filter((marker) => vehicles.some(({ gid }) => gid === marker.title));
-
-      oldMarkers
-        .forEach((marker) => {
-          const vehicle = vehicles.find(({ gid }) => gid === marker.title)
+      const oldMarkers = this.markers.reduce((res, marker) => {
+        const vehicle = vehicles.find(({ gid }) => gid === marker.title);
+        if (vehicle) {
           window.gMap.updateVehicleMarkerPosition(marker, vehicle);
-        });
-
-      const markersToBeRemoved = this.markers
-        .filter((marker) => !vehicles.some(({ gid }) => gid === marker.title))
-        .forEach((marker) => marker.setMap(null));
+          return [...res, marker];
+        }
+        marker.setMap(null); // remove from map
+        return res;
+      }, []);
 
       this.markers = [
         ...oldMarkers,
