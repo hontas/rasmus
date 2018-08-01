@@ -2,87 +2,17 @@
 <html lang="sv">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#8b0000">
   <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" type="text/css" href="css/font-awesome.css">
   <link rel="stylesheet" type="text/css" href="css/style.css">
   <link rel="shortcut icon" type="image/x-icon" href="favicon.ico" />
   <title>Resmus - Rasmus reseplanerare</title>
-
-  <script type="text/x-template" id="search-trip">
-    <div class="search-trip">
-      <div class="form">
-        <p v-if="!initialized">
-          Initierar... <i class="fa fa-spin fa-spinner"></i>
-        </p>
-        <location-input displayNearbyStops locationApi="RR" label="Från" :parentLoading="isLoading" :disabled="!initialized" @set-location="setFrom"></location-input>
-        <location-input locationApi="RR" label="Till" :parentLoading="isLoading" :disabled="!initialized" @set-location="setDest"></location-input>
-        <button class="btn" @click="findTrip" :disabled="!from || !dest">
-          Sök
-          <i class="fa fa-spin" :class="{ 'fa-spinner': isLoading }" aria-hidden="true"></i>
-        </button>
-      </div>
-      <trips-list :trips="trips"></trips-list>
-    </div>
-  </script>
-
-  <script type="text/x-template" id="station-info">
-    <div class="station-info">
-      <div class="form">
-        <p v-if="!initialized">
-          Initierar... <i class="fa fa-spin fa-spinner"></i>
-        </p>
-        <location-input locationApi="VT" displayNearbyStops label="Hållplats" :parentLoading="isLoading" :disabled="!initialized" @set-location="setFrom"></location-input>
-      </div>
-      <trips-table :arrivals="arrivals" :isLoading="isLoading" :trips="trips" :info="info" :from="location.name"></trips-table>
-    </div>
-  </script>
-
-  <script type="text/x-template" id="location-input">
-    <div class="location-input"
-      :class="{ 'with-label': label }"
-      @focus="showDropDown"
-      @keyup.esc="hideDropDown">
-
-      <label>
-        {{label}}:
-        <input v-model="searchText"
-          @input="onInput"
-          @focus="showDropDown"
-          @blur="possiblyHideDropDown"
-          @keyup.enter="selectFirstSuggestion"
-          @keyup="handleKeyInput"
-          type="search"
-          placeholder=""
-          :disabled="disabled">
-        <i class="fa fa-spin" :class="{ 'fa-spinner': isLoading }" aria-hidden="true"></i>
-      </label>
-
-      <ul v-show="show" class="location-input__suggestions">
-        <li class="location-input__suggestion" v-if="fetchingNearbyStops" @keyup="handleKeyInput">
-          <button @click.prevent>
-            Hämtar närliggande hållplatser
-            <i class="fa fa-spinner fa-spin"></i>
-          </button>
-        </li>
-        <li class="location-input__suggestion" v-if="suggestions.length === 0 && !searchText" v-for="station in nearbyStations" @keyup="handleKeyInput">
-          <button @click.prevent="onSelect(station)" @keyup.space="onSelect(station)">{{ station.name }}</button>
-        </li>
-        <li class="location-input__suggestion" v-if="suggestions.length === 0 && searchText && !isFetching">
-          <button @click.prevent>Inga resultat för söktermen</button>
-        </li>
-        <li class="location-input__suggestion" v-for="suggestion in suggestions" :key="suggestion.id" @keyup="handleKeyInput">
-          <button @click.prevent="onSelect(suggestion)" @keyup.space="onSelect(suggestion)">{{ suggestion.name }}</button>
-        </li>
-      </ul>
-    </div>
-  </script>
 </head>
 <body>
-
   <div id="app">
-    <div v-if="devMode" class="flerp">in development: karta</div>
+    <div v-if="devMode" class="flerp">localhost - in development:</div>
     <div class="top-nav">
       <ul class="tabs">
         <li class="tab" :class="{ active: (tab === 2) }" @click="changeTab(2)">Avgångar (västtrafik)</li>
@@ -401,11 +331,59 @@ Vue.component('location-input', {
       this.hideDropDown();
     }
   },
-  template: '#location-input'
+  template: `
+    <div class="location-input"
+      :class="{ 'with-label': label }"
+      @focus="showDropDown"
+      @keyup.esc="hideDropDown">
+
+      <label>
+        {{label}}:
+        <input v-model="searchText"
+          @input="onInput"
+          @focus="showDropDown"
+          @blur="possiblyHideDropDown"
+          @keyup.enter="selectFirstSuggestion"
+          @keyup="handleKeyInput"
+          type="search"
+          placeholder=""
+          :disabled="disabled">
+        <i class="fa fa-spin" :class="{ 'fa-spinner': isLoading }" aria-hidden="true"></i>
+      </label>
+
+      <ul v-show="show" class="location-input__suggestions">
+        <li class="location-input__suggestion" v-if="fetchingNearbyStops" @keyup="handleKeyInput">
+          <button @click.prevent>
+            Hämtar närliggande hållplatser
+            <i class="fa fa-spinner fa-spin"></i>
+          </button>
+        </li>
+        <li class="location-input__suggestion" v-if="suggestions.length === 0 && !searchText" v-for="station in nearbyStations" @keyup="handleKeyInput">
+          <button @click.prevent="onSelect(station)" @keyup.space="onSelect(station)">{{ station.name }}</button>
+        </li>
+        <li class="location-input__suggestion" v-if="suggestions.length === 0 && searchText && !isFetching">
+          <button @click.prevent>Inga resultat för söktermen</button>
+        </li>
+        <li class="location-input__suggestion" v-for="suggestion in suggestions" :key="suggestion.id" @keyup="handleKeyInput">
+          <button @click.prevent="onSelect(suggestion)" @keyup.space="onSelect(suggestion)">{{ suggestion.name }}</button>
+        </li>
+      </ul>
+    </div>
+  `
 });
 
 Vue.component('station-info', {
-  template: '#station-info',
+  template: `
+    <div class="station-info">
+      <div class="form">
+        <p v-if="!initialized">
+          Initierar... <i class="fa fa-spin fa-spinner"></i>
+        </p>
+        <location-input locationApi="VT" displayNearbyStops label="Hållplats" :parentLoading="isLoading" :disabled="!initialized" @set-location="setFrom"></location-input>
+      </div>
+      <trips-table :arrivals="arrivals" :isLoading="isLoading" :trips="trips" :info="info" :from="location.name"></trips-table>
+    </div>
+  `,
   props: {
     arrivals: Boolean
   },
@@ -481,6 +459,8 @@ Vue.component('station-info', {
   }
 });
 
+const getUpdateInterval = (zoomFactor) => (1000 * 40 / zoomFactor);
+
 Vue.component('google-map', {
   template: `
     <div class="google-map" id="map">
@@ -490,91 +470,66 @@ Vue.component('google-map', {
     return {
       map: null,
       vehicles: [],
-      markers: []
+      markers: [],
+      updateInterval: getUpdateInterval(13)
     };
   },
   mounted() {
     positionPromise.then(({ lat, long: lng }) => {
-      console.log('pos', { lat, lng });
-      this.map = new google.maps.Map(document.getElementById('map'), {
-        center: { lat, lng },
-        zoom: 13
+      this.map = window.gMap.initMap({
+        rootElement: document.getElementById('map'),
+        position: { lat, lng }
       });
 
-      new google.maps.Marker({
-        position: { lat, lng },
-        map: this.map,
-        label: 'Du'
-      });
-
-      google.maps.event.addListenerOnce(this.map, 'bounds_changed', () => {
-        this.getLiveMap(this.map.getBounds().toJSON());
-      });
-      this.map.addListener('dragend', this.getLiveMap);
-      this.map.addListener('zoom_changed', this.getLiveMap);
+      this.setupEventListeners();
       this.updateMap();
     });
   },
+  beforeDestroy() {
+    window.google.maps.event.clearInstanceListeners(this.map);
+  },
   methods: {
+    setupEventListeners() {
+      window.google.maps.event.addListenerOnce(this.map, 'bounds_changed', this.getLiveMap);
+      this.map.addListener('dragend', this.getLiveMap);
+      this.map.addListener('zoom_changed', () => {
+        this.updateInterval = getUpdateInterval(this.map.getZoom());
+        this.getLiveMap();
+      });
+    },
     updateMap() {
       window.requestAnimationFrame(() => {
         setTimeout(() => {
           this.getLiveMap();
           this.updateMap();
-        }, 1000) // every second
+        }, this.updateInterval)
       });
     },
     getLiveMap() {
       window.VT.getLiveMap(this.map.getBounds().toJSON())
-        .then((vehicles) => this.plotVehicles(vehicles));
+        .then(this.plotVehicles);
     },
     plotVehicles(vehicles) {
-      console.log('vehicles', vehicles);
+      if (vehicles.length && vehicles.length !== this.markers.length) {
+        console.log('vehicles', vehicles);
+      }
+
       if (vehicles.length > 100) {
-        vehicles = vehicles.filter(({ name }) => !name.startsWith('Bus'));
+        vehicles = vehicles.filter(({ prodclass }) => prodclass !== 'BUS');
         console.log('too many vehicles, filtering out buses', vehicles.length);
       }
 
-      const icons = {
-        Bu: 'https://www.barcelona-airport.com/images/icons/bus.png',
-        Sp: 'https://www.barcelona-airport.com/images/icons/metro.png',
-        SJ: 'https://www.barcelona-airport.com/images/icons/tren2.png',
-        'Vä': 'https://www.barcelona-airport.com/images/icons/tren2.png'
-      };
-      const icon = {
-        scaledSize: new google.maps.Size(32, 32),
-        labelOrigin: new google.maps.Point(16, -8),
-        anchor: new google.maps.Point(16, 28)
-      };
-      const getIcon = (label) => ({
-        ...icon,
-        url: icons[label.substr(0,2)] || icons.Bu
-      });
-
       const newMarkers = vehicles
         .filter(({ gid }) => !this.markers.some(({ title }) => gid === title))
-        .map((vehicle) =>
-          new google.maps.Marker({
-            position: {
-              lat: vehicle.y / 1000000,
-              lng: vehicle.x / 1000000
-            },
-            map: this.map,
-            title: vehicle.gid,
-            label: vehicle.name,
-            animation: google.maps.Animation.DROP,
-            icon: getIcon(vehicle.name)
-          })
-        );
+        .map(window.gMap.createVehicleMarker);
+
       const oldMarkers = this.markers
         .filter((marker) => vehicles.some(({ gid }) => gid === marker.title));
+
       oldMarkers
         .forEach((marker) => {
           const vehicle = vehicles.find(({ gid }) => gid === marker.title)
-          marker.setPosition({
-            lat: vehicle.y / 1000000,
-            lng: vehicle.x / 1000000
-          });
+          window.gMap.updateVehicleMarkerPosition(marker, vehicle);
         });
 
       const markersToBeRemoved = this.markers
@@ -677,5 +632,6 @@ function sortNumbersAndLetters(a, b) {
   onreadystatechange="if (this.readyState === 'complete') this.onload()">
 </script>
 <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAQVyCYvuXOxLcIMlT68G-ELLSxMVDqDGc"></script>
+<script async defer src="js/googleMap.js"></script>
 </body>
 </html>
