@@ -18,7 +18,7 @@
         <li class="tab" :class="{ active: (tab === 2) }" @click="changeTab(2)">Avgångar (västtrafik)</li>
         <li class="tab" :class="{ active: (tab === 3) }" @click="changeTab(3)">Ankomster (västtrafik)</li>
         <li class="tab" :class="{ active: (tab === 4) }" @click="changeTab(4)">Karta</li>
-        <li class="tab" :class="{ active: (tab === 5) }" @click="changeTab(5)">Information</li>
+        <li class="tab" :class="{ active: (tab === 5) }" @click="changeTab(5)">Info</li>
       </ul>
       <digital-clock></digital-clock>
     </div>
@@ -76,17 +76,8 @@ Vue.component('trips-table', {
   props: {
     trips: Array,
     isLoading: Boolean,
-    info: {
-      message: String,
-      affectedLines: Array
-    },
     filter: Object,
     from: String
-  },
-  computed: {
-    message() {
-      return this.info.message || 'Inga trafikstörningar.';
-    }
   },
   methods: {},
   template: `
@@ -116,7 +107,7 @@ Vue.component('trips-table', {
               </div>
               <div class="trip-dest-via"><small v-if="trip.via"> via {{ trip.via }}</small></div>
             </td>
-            <td class="trip-time"><span v-if="!trip.rtTime">ca</span>{{ trip.time }}</td>
+            <td class="trip-time"><span v-if="!trip.rtTime">ca&nbsp;</span>{{ trip.time }}</td>
             <td class="trip-time is-late"><span v-if="trip.isLate">{{ trip.rtTime }}</span></td>
             <td class="trip-track">{{ trip.track }}</td>
           </tr>
@@ -130,11 +121,6 @@ Vue.component('trips-table', {
             <td colspan="5">Inga resor att visa</td>
           </tr>
         </tbody>
-        <tfoot v-if="from">
-          <tr>
-            <td colspan="5"><p>{{ this.message }}</p></td>
-          </tr>
-        </tfoot>
       </table>
     </div>
   `
@@ -308,50 +294,6 @@ Vue.component('location-input', {
 });
 
 Vue.component('station-info', {
-  template: `
-    <div class="station-info">
-      <div class="form">
-        <p v-if="!initialized">
-          Initierar... <i class="fa fa-spin fa-spinner"></i>
-        </p>
-        <location-input locationApi="VT" displayNearbyStops label="Hållplats" :parentLoading="isLoading" :disabled="!initialized" @set-location="setFrom"></location-input>
-      </div>
-      <ul class="trips-table__filter" v-if="location.id">
-        <li>Filter:</li>
-        <li>
-          <select v-model="filter.dest">
-            <option value="">{{ this.fromToLabel }}</option>
-            <option v-for="dest in destinations" :key="dest" :value="dest">{{ dest }}</option>
-          </select>
-        </li>
-        <li>
-          <select v-model="filter.track">
-            <option value="">Hållplats</option>
-            <option v-for="track in tracks" :key="track" :value="track">{{ track }}</option>
-          </select>
-        </li>
-        <li>
-          <select v-model="timeSpan">
-            <option value="">Avgångar inom</option>
-            <option value="30">30 min</option>
-            <option value="60">1 timme</option>
-            <option value="120">2 timmar</option>
-            <option value="180">3 timmar</option>
-            <option value="360">6 timmar</option>
-            <option value="720">12 timmar</option>
-            <option value="1440">24 timmar</option>
-          </select>
-        </li>
-        <li>
-          <label>
-            Live update
-            <input type="checkbox" name="live" v-model="isLive">
-          </label>
-        </li>
-      </ul>
-      <trips-table :isLoading="isLoading" :trips="filteredTrips" :filter="filter" :info="info" :from="location.name"></trips-table>
-    </div>
-  `,
   props: {
     arrivals: Boolean
   },
@@ -361,7 +303,7 @@ Vue.component('station-info', {
       isLoading: false,
       initialized: false,
       trips: [],
-      info: '',
+      info: {},
       filter: {
         track: '',
         dest: ''
@@ -416,7 +358,7 @@ Vue.component('station-info', {
     arrivals(newVal, oldVal) {
       if (newVal !== oldVal) {
         this.trips = [];
-        this.info = '';
+        this.info = {};
         if (this.location.region) {
           this.getDepartures();
         }
@@ -467,7 +409,52 @@ Vue.component('station-info', {
           this.info = situations;
         });
     }
-  }
+  },
+  template: `
+    <div class="station-info">
+      <div class="station-info__form">
+        <p v-if="!initialized">
+          Initierar... <i class="fa fa-spin fa-spinner"></i>
+        </p>
+        <location-input locationApi="VT" displayNearbyStops label="Hållplats" :parentLoading="isLoading" :disabled="!initialized" @set-location="setFrom"></location-input>
+      </div>
+      <ul class="station-info__trips-filter" v-if="location.id">
+        <li>Filter:</li>
+        <li>
+          <select v-model="filter.dest">
+            <option value="">{{ this.fromToLabel }}</option>
+            <option v-for="dest in destinations" :key="dest" :value="dest">{{ dest }}</option>
+          </select>
+        </li>
+        <li>
+          <select v-model="filter.track">
+            <option value="">Hållplats</option>
+            <option v-for="track in tracks" :key="track" :value="track">{{ track }}</option>
+          </select>
+        </li>
+        <li>
+          <select v-model="timeSpan">
+            <option value="">Avgångar inom</option>
+            <option value="30">30 min</option>
+            <option value="60">1 timme</option>
+            <option value="120">2 timmar</option>
+            <option value="180">3 timmar</option>
+            <option value="360">6 timmar</option>
+            <option value="720">12 timmar</option>
+            <option value="1440">24 timmar</option>
+          </select>
+        </li>
+        <li>
+          <label>
+            Live update
+            <input type="checkbox" name="live" v-model="isLive">
+          </label>
+        </li>
+      </ul>
+      <trips-table :isLoading="isLoading" :trips="filteredTrips" :filter="filter" :from="location.name"></trips-table>
+      <p class="station-info__situations" v-if="location.name">{{ this.info.message || 'Inga trafikstörningar.' }}</p>
+    </div>
+  `
 });
 
 const getUpdateInterval = (zoomFactor) => (1000 * 40 / zoomFactor);
