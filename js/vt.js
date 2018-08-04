@@ -56,20 +56,26 @@ window.VT = (function VT() {
     });
   }
 
-  function getArrivalsTo(id) {
+  function getArrivalsTo(id, timeSpan) {
     const now = new Date();
     const date = now.toISOString().substr(0, 10);
     const time = now.toLocaleTimeString().substr(0, 5);
     const requestUrl = `${travelPlanner}/arrivalBoard?id=${encodeURIComponent(id)}&date=${encodeURIComponent(date)}&time=${encodeURIComponent(time)}&format=json`;
+    if (timeSpan) {
+      requestUrl = `${requestUrl}&timeSpan=${timeSpan}`
+    }
     return getTimeTable(id, requestUrl)
       .then((json) => json.ArrivalBoard.Arrival)
       .then(transformTrips);
   }
 
-  function getDeparturesFrom(id) {
-    const requestUrl = `${travelPlanner}/departureBoard?id=${encodeURIComponent(id)}&format=json`;
+  function getDeparturesFrom(id, timeSpan) {
+    let requestUrl = `${travelPlanner}/departureBoard?id=${encodeURIComponent(id)}&format=json`;
+    if (timeSpan) {
+      requestUrl = `${requestUrl}&timeSpan=${timeSpan}`
+    }
     return getTimeTable(id, requestUrl)
-      .then((json) => json.DepartureBoard.Departure)
+      .then((json) => json.DepartureBoard.Departure || [])
       // .then(filterSimilar)
       .then(transformTrips);
   }

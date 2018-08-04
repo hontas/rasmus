@@ -80,82 +80,17 @@ Vue.component('trips-table', {
       message: String,
       affectedLines: Array
     },
-    from: String,
-    arrivals: Boolean
-  },
-  data() {
-    return {
-      filter: {
-        track: '',
-        dest: '',
-        live: true
-      }
-    };
+    filter: Object,
+    from: String
   },
   computed: {
-    tracks() {
-      const tracks = [].concat(this.trips).map(({ track }) => track);
-      return Array.from(new Set(tracks))
-        .sort(sortNumbersAndLetters);
-    },
-    destinations() {
-      const destinations = [].concat(this.trips).map(({ direction, origin }) => direction || origin);
-      return Array.from(new Set(destinations));
-    },
-    filteredTrips() {
-      const { track, dest } = this.filter;
-      const { affectedLines = [] } = this.info;
-      return this.trips
-        .map((trip) => ({
-          ...trip,
-          isAffected: affectedLines.includes(trip.sname)
-        }))
-        .filter((t) => (track ? t.track === track : true))
-        .filter(({ direction, origin }) => (dest ? (direction === dest || origin === dest) : true));
-    },
     message() {
       return this.info.message || 'Inga trafikstörningar.';
-    },
-    fromToLabel() {
-      return this.arrivals ? 'Från' : 'Till';
     }
   },
   methods: {},
-  watch: {
-    filter: {
-      handler({ live }) {
-        if (live) {
-          // start refresh
-        } else {
-          // clear refresh timeout
-        }
-      },
-      deep: true
-    }
-  },
   template: `
     <div class="trips-table">
-      <ul class="trips-table__filter" v-if="filteredTrips.length">
-        <li>Filter:</li>
-        <li>
-          <select v-model="filter.dest">
-            <option value="">{{ this.fromToLabel }}</option>
-            <option v-for="dest in destinations" :key="dest" :value="dest">{{ dest }}</option>
-          </select>
-        </li>
-        <li>
-          <select v-model="filter.track">
-            <option value="">Hållplats</option>
-            <option v-for="track in tracks" :key="track" :value="track">{{ track }}</option>
-          </select>
-        </li>
-        <li>
-          <label>
-            Live
-            <input type="checkbox" name="live" v-model="filter.live">
-          </label>
-        </li>
-      </ul>
       <table>
         <thead>
           <tr>
@@ -167,7 +102,7 @@ Vue.component('trips-table', {
           </tr>
         </thead>
         <tbody>
-          <tr v-for="trip in filteredTrips" :key="trip.id" :class="{ 'trip--cancelled': trip.cancelled }">
+          <tr v-for="trip in trips" :key="trip.id" :class="{ 'trip--cancelled': trip.cancelled }">
             <td class="trip-line" :style="{ backgroundColor: trip.fgColor, color: trip.bgColor }">
               {{ trip.sname }}
             </td>
@@ -181,7 +116,7 @@ Vue.component('trips-table', {
               </div>
               <div class="trip-dest-via"><small v-if="trip.via"> via {{ trip.via }}</small></div>
             </td>
-            <td class="trip-time">{{ trip.time }}</td>
+            <td class="trip-time"><span v-if="!trip.rtTime">ca</span>{{ trip.time }}</td>
             <td class="trip-time is-late"><span v-if="trip.isLate">{{ trip.rtTime }}</span></td>
             <td class="trip-track">{{ trip.track }}</td>
           </tr>
@@ -381,7 +316,40 @@ Vue.component('station-info', {
         </p>
         <location-input locationApi="VT" displayNearbyStops label="Hållplats" :parentLoading="isLoading" :disabled="!initialized" @set-location="setFrom"></location-input>
       </div>
-      <trips-table :arrivals="arrivals" :isLoading="isLoading" :trips="trips" :info="info" :from="location.name"></trips-table>
+      <ul class="trips-table__filter" v-if="location.id">
+        <li>Filter:</li>
+        <li>
+          <select v-model="filter.dest">
+            <option value="">{{ this.fromToLabel }}</option>
+            <option v-for="dest in destinations" :key="dest" :value="dest">{{ dest }}</option>
+          </select>
+        </li>
+        <li>
+          <select v-model="filter.track">
+            <option value="">Hållplats</option>
+            <option v-for="track in tracks" :key="track" :value="track">{{ track }}</option>
+          </select>
+        </li>
+        <li>
+          <select v-model="timeSpan">
+            <option value="">Avgångar inom</option>
+            <option value="30">30 min</option>
+            <option value="60">1 timme</option>
+            <option value="120">2 timmar</option>
+            <option value="180">3 timmar</option>
+            <option value="360">6 timmar</option>
+            <option value="720">12 timmar</option>
+            <option value="1440">24 timmar</option>
+          </select>
+        </li>
+        <li>
+          <label>
+            Live update
+            <input type="checkbox" name="live" v-model="isLive">
+          </label>
+        </li>
+      </ul>
+      <trips-table :isLoading="isLoading" :trips="filteredTrips" :filter="filter" :info="info" :from="location.name"></trips-table>
     </div>
   `,
   props: {
@@ -393,7 +361,13 @@ Vue.component('station-info', {
       isLoading: false,
       initialized: false,
       trips: [],
-      info: ''
+      info: '',
+      filter: {
+        track: '',
+        dest: ''
+      },
+      isLive: true,
+      timeSpan: ''
     };
   },
   computed: {
@@ -404,6 +378,29 @@ Vue.component('station-info', {
       return this.arrivals ?
         window[this.location.region].getArrivalsTo :
         window[this.location.region].getDeparturesFrom;
+    },
+    tracks() {
+      const tracks = [].concat(this.trips).map(({ track }) => track);
+      return Array.from(new Set(tracks))
+        .sort(sortNumbersAndLetters);
+    },
+    destinations() {
+      const destinations = [].concat(this.trips).map(({ direction, origin }) => direction || origin);
+      return Array.from(new Set(destinations));
+    },
+    filteredTrips() {
+      const { track, dest } = this.filter;
+      const { affectedLines = [] } = this.info;
+      return this.trips
+        .map((trip) => ({
+          ...trip,
+          isAffected: affectedLines.includes(trip.sname)
+        }))
+        .filter((t) => (track ? t.track === track : true))
+        .filter(({ direction, origin }) => (dest ? (direction === dest || origin === dest) : true));
+    },
+    fromToLabel() {
+      return this.arrivals ? 'Från' : 'Till';
     }
   },
   created() {
@@ -411,6 +408,9 @@ Vue.component('station-info', {
       .then(() => {
         this.initialized = true;
       });
+  },
+  beforeDestroy() {
+    clearTimeout(this.lastTimeoutId);
   },
   watch: {
     arrivals(newVal, oldVal) {
@@ -421,6 +421,17 @@ Vue.component('station-info', {
           this.getDepartures();
         }
       }
+    },
+    isLive(value) {
+      console.log('isLive', value);
+      if (value) {
+        this.refreshDepartures();
+      } else {
+        clearTimeout(this.lastTimeoutId);
+      }
+    },
+    timeSpan(newVal) {
+      this.getDepartures();
     }
   },
   methods: {
@@ -441,7 +452,7 @@ Vue.component('station-info', {
     },
     getDepartures() {
       this.isLoading = true;
-      this.method(this.location.id)
+      this.method(this.location.id, this.timeSpan)
         .then((resp) => {
           this.trips = resp.map(getDestinationVia);
           console.log('this.trips', this.trips);
@@ -487,6 +498,7 @@ Vue.component('google-map', {
   },
   beforeDestroy() {
     window.google.maps.event.clearInstanceListeners(this.map);
+    clearTimeout(this.timeoutId);
   },
   methods: {
     setupEventListeners() {
@@ -499,7 +511,7 @@ Vue.component('google-map', {
     },
     updateMap() {
       window.requestAnimationFrame(() => {
-        setTimeout(() => {
+        this.timeoutId = setTimeout(() => {
           this.getLiveMap();
           this.updateMap();
         }, this.updateInterval)
