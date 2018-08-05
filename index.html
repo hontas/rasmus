@@ -458,7 +458,10 @@ Vue.component('station-info', {
   `
 });
 
-const getUpdateInterval = (zoomFactor) => (1000 * 40 / zoomFactor);
+const getUpdateInterval = (zoomFactor) => {
+  // 1000 * 40 / zoomFactor
+  return 4000000 / Math.pow(zoomFactor, 3) * 2;
+};
 
 Vue.component('google-map', {
   template: `
@@ -519,10 +522,8 @@ Vue.component('google-map', {
       });
     },
     getLiveMap() {
-      console.log('this.map.getBounds()', this.map.getBounds());
       // window.VT.getLiveMap(this.map.getBounds().toJSON())
       const [west, south, east, north] = this.map.getBounds().toBBoxString().split(',').map(Number);
-      console.log('{ south, west, north, east }', { south, west, north, east });
       window.VT.getLiveMap({ south, west, north, east })
         .then(this.plotVehicles);
     },
