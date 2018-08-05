@@ -117,16 +117,13 @@ window.VT = (function VT() {
 
   function getClosestStops({ lat, lng }, limit = 5, retry = true) {
     const url = `${travelPlanner}/location.nearbystops?originCoordLat=${lat}&originCoordLong=${lng}&maxNo=${limit}&format=json`;
-    anropaVasttrafik(url)
+    return anropaVasttrafik(url)
       .then((json) => {
         if (json.LocationList.errorText) {
           throw new Error(json.LocationList.errorText);
         }
 
-        const stop = json.LocationList.StopLocation;
-        return Object.assign({}, stop, {
-          region: 'VT'
-        });
+        return json.LocationList.StopLocation;
       })
       .catch((reason) => {
         if (retry) {
@@ -134,6 +131,7 @@ window.VT = (function VT() {
           getClosestStops({ lat, lng }, limit, false);
         } else {
           console.log('[getClosestStops] error', reason);
+          throw reason;
         }
       });
   }

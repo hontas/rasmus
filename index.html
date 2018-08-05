@@ -31,9 +31,8 @@
     </div>
   </div>
 
-  <script type="text/javascript" src="js/vendor/vue.js"></script>
-  <script src="js/vendor/jquery-3.2.1.slim.min.js"></script>
-  <script src="js/vt.js"></script>
+  <script type="text/javascript" src="js/vendor/vue@2.5.17.js"></script>
+  <script src="js/vasttrafik.js"></script>
   <!-- <script src="js/sl.js"></script> -->
   <script>
 /* global Vue, VT, google */
@@ -563,9 +562,6 @@ Vue.component('map-component', {
         this.map.removeLayer(marker); // remove from map
         return res;
       }, []);
-
-      console.log('newMarkers', newMarkers);
-      console.log('oldMarkers', oldMarkers);
 
       this.markers = [
         ...oldMarkers,
