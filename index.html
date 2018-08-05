@@ -262,7 +262,7 @@ Vue.component('location-input', {
           @focus="showDropDown"
           @blur="possiblyHideDropDown"
           @keyup.enter="selectFirstSuggestion"
-          @keyup="handleKeyInput"
+          @keydown="handleKeyInput"
           type="search"
           placeholder=""
           :disabled="disabled">
@@ -653,12 +653,12 @@ function sortNumbersAndLetters(a, b) {
 //   });
 // }
 </script>
+<script async defer src="js/vendor/leaflet@1.3.3.js"></script>
+<script async defer src="js/map.js"></script>
 <script async defer src="js/googleDriveAPI.js"></script>
 <script async defer src="https://apis.google.com/js/api.js"
   onload="this.onload=function(){};handleClientLoad()"
   onreadystatechange="if (this.readyState === 'complete') this.onload()">
 </script>
-<script async defer src="js/vendor/leaflet@1.3.3.js"></script>
-<script async defer src="js/map.js"></script>
 </body>
 </html>

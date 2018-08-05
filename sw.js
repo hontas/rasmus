@@ -14,7 +14,6 @@ const urlsToCache = [
   '/css/fonts/fontawesome-webfont.ttf',
   '/css/fonts/fontawesome-webfont.woff',
   '/css/fonts/fontawesome-webfont.woff2',
-  '/js/vendor/jquery-3.2.1.slim.min.js',
   '/js/vendor/vue.js',
   '/js/resrobot.js',
   '/js/sl.js',

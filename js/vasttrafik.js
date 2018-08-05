@@ -116,14 +116,23 @@ window.VT = (function VT() {
   }
 
   function getClosestStops({ lat, lng }, limit = 5, retry = true) {
-    const url = `${travelPlanner}/location.nearbystops?originCoordLat=${lat}&originCoordLong=${lng}&maxNo=${limit}&format=json`;
+    const url = `${travelPlanner}/location.nearbystops?originCoordLat=${lat}&originCoordLong=${lng}&maxNo=${limit*2}&format=json`;
     return anropaVasttrafik(url)
       .then((json) => {
         if (json.LocationList.errorText) {
           throw new Error(json.LocationList.errorText);
         }
 
-        return json.LocationList.StopLocation;
+        return json.LocationList.StopLocation
+          .filter(({ name }, index, self) => {
+            const firstMatch = self.findIndex((stop) => stop.name === name);
+            return firstMatch === index;
+          })
+          .map((stop) => ({
+            ...stop,
+            region: 'VT'
+          }))
+          .slice(0, limit);
       })
       .catch((reason) => {
         if (retry) {
