@@ -476,6 +476,7 @@ Vue.component('map-component', {
       vehicles: [],
       markers: [],
       followMe: false,
+      getLiveMapRequestId: 0,
       updateInterval: getUpdateInterval(13)
     };
   },
@@ -524,18 +525,21 @@ Vue.component('map-component', {
     updateMap() {
       window.requestAnimationFrame(() => {
         this.timeoutId = setTimeout(() => {
-          this.getLiveMap();
-          this.updateMap();
+          this.getLiveMap().then(this.updateMap);
         }, this.updateInterval)
       });
     },
     getLiveMap() {
       console.log('get vehicle positions');
+      const requestId = ++this.getLiveMapRequestId;
       const [west, south, east, north] = this.map.getBounds().toBBoxString().split(',').map(Number);
-      window.VT.getLiveMap({ south, west, north, east })
-        .then(this.plotVehicles);
+      return window.VT.getLiveMap({ south, west, north, east })
+        .then((vehicles) => this.plotVehicles(vehicles, requestId));
     },
-    plotVehicles(vehicles) {
+    plotVehicles(vehicles, requestId) {
+      // only plot positions from latest request
+      if (requestId !== this.getLiveMapRequestId) return;
+
       if (vehicles.length && vehicles.length !== this.markers.length) {
         console.log('vehicles', vehicles);
       }

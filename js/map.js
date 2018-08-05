@@ -10,23 +10,14 @@ window.map = (function iife() {
     REG: 'https://rrp.vasttrafik.se/img/build/products/haf_prod_ic.svg', // regionaltåg
     VAS: 'https://rrp.vasttrafik.se/img/build/products/haf_prod_ice.svg' // västtågen
   };
-  // const icon = {
-  //   scaledSize: new google.maps.Size(20, 20),
-  //   labelOrigin: new google.maps.Point(10, -8),
-  //   anchor: new google.maps.Point(10, 10)
-  // };
 
   const getIcon = (prodtype) => {
     return L.icon({
       iconUrl: icons[prodtype],
       iconSize:     [20, 20], // size of the icon
       iconAnchor:   [10, 10], // point of the icon which will correspond to marker's location
-      popupAnchor:  [0, -18] // point from which the popup should open relative to the iconAnchor
+      popupAnchor:  [0, -16] // point from which the popup should open relative to the iconAnchor
     });
-    // return {
-    //   ...icon,
-    //   url: icons[prodtype]
-    // };
   };
 
   const toWGS84 = ({ lat, lng }) => ({
@@ -39,11 +30,6 @@ window.map = (function iife() {
   });
 
   function initMap({ rootElement, position, zoom = 13 }) {
-    // map = new google.maps.Map(rootElement, {
-    //   center: position,
-    //   zoom
-    // });
-
     const { lat, lng } = position;
     map = L.map(rootElement.getAttribute('id'))
       .setView([lat, lng], zoom);
@@ -52,12 +38,6 @@ window.map = (function iife() {
         attribution: 'Map data © <a href="https://openstreetmap.org">OpenStreetMap</a> contributors',
         maxZoom: 18,
     }).addTo(map);
-
-    // new google.maps.Marker({
-    //   position,
-    //   map,
-    //   label: 'Du'
-    // });
 
     meMarker = L.marker([lat, lng])
       .addTo(map)
@@ -68,7 +48,7 @@ window.map = (function iife() {
 
   function centerOnMe({ lat, lng }) {
     meMarker.setLatLng([lat, lng]);
-    map.flyTo([lat, lng]);
+    // map.flyTo([lat, lng]);
   }
 
   const createVehicleMarker = (vehicle) => {
@@ -86,7 +66,6 @@ window.map = (function iife() {
         ${delayedText}
       </div>
     `;
-    // const infowindow = new google.maps.InfoWindow({ content });
 
     const { lat, lng } = fromWGS84(y, x);
     const marker = L.marker([lat, lng], {
@@ -95,28 +74,12 @@ window.map = (function iife() {
       .addTo(map)
       .bindPopup(content);
 
-    // const marker = new google.maps.Marker({
-    //   position: { lat, lng },
-    //   map,
-    //   title: vehicle.gid,
-    //   icon: getIcon(prodclass)
-    // });
-
-    // marker.addListener('click', () => {
-    //   if (infowindow.map) {
-    //     infowindow.close();
-    //   } else {
-    //     infowindow.open(map, marker);
-    //   }
-    // });
-
     return marker;
   };
 
   function updateVehicleMarkerPosition(marker, { y, x }) {
     const {lat, lng} = fromWGS84(y, x);
     marker.setLatLng([lat, lng]);
-    // marker.setPosition(fromWGS84(y, x));
   }
 
   return {
@@ -124,8 +87,6 @@ window.map = (function iife() {
     getIcon,
     createVehicleMarker,
     updateVehicleMarkerPosition,
-    centerOnMe,
-    toWGS84,
-    fromWGS84,
+    centerOnMe
   };
 }())

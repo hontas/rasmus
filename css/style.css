@@ -311,6 +311,9 @@ body {
 #map {
   height: 100%;
 }
+.map-component {
+  position: relative;
+}
 .map-component__status {
   background-color: rgba(244,244,244,.7);
   border-radius: 2px;
@@ -322,7 +325,7 @@ body {
   padding: .2em .5em;
   position: absolute;
   right: 10px;
-  top: 46px;
+  top: 10px;
   user-select: none;
   z-index: 9999;
 }
