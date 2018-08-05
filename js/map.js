@@ -69,7 +69,8 @@ window.map = (function iife() {
 
     const { lat, lng } = fromWGS84(y, x);
     const marker = L.marker([lat, lng], {
-      icon: getIcon(prodclass)
+      icon: getIcon(prodclass),
+      title: vehicle.gid
     })
       .addTo(map)
       .bindPopup(content);

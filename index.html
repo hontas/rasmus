@@ -550,11 +550,12 @@ Vue.component('map-component', {
       }
 
       const newMarkers = vehicles
-        .filter(({ gid }) => !this.markers.some(({ title }) => gid === title))
-        .map(window.map.createVehicleMarker);
+        .filter(({ gid }) => !this.markers
+          .some(({ options: { title } }) => gid === title))
+          .map(window.map.createVehicleMarker);
 
       const oldMarkers = this.markers.reduce((res, marker) => {
-        const vehicle = vehicles.find(({ gid }) => gid === marker.title);
+        const vehicle = vehicles.find(({ gid }) => gid === marker.options.title);
         if (vehicle) {
           window.map.updateVehicleMarkerPosition(marker, vehicle);
           return [...res, marker];
@@ -562,6 +563,9 @@ Vue.component('map-component', {
         this.map.removeLayer(marker); // remove from map
         return res;
       }, []);
+
+      console.log('newMarkers', newMarkers);
+      console.log('oldMarkers', oldMarkers);
 
       this.markers = [
         ...oldMarkers,
