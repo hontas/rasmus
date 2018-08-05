@@ -1,5 +1,6 @@
 window.map = (function iife() {
   let map;
+  let meMarker;
   const icons = {
     BOAT: 'https://rrp.vasttrafik.se/img/build/products/haf_prod_ship.svg',
     BUS: 'https://rrp.vasttrafik.se/img/build/products/haf_prod_bus.svg',
@@ -58,12 +59,16 @@ window.map = (function iife() {
     //   label: 'Du'
     // });
 
-    L.marker([lat, lng])
+    meMarker = L.marker([lat, lng])
       .addTo(map)
       .bindPopup("<p>Din position</p>");
 
-    window.myMap = map;
     return map;
+  }
+
+  function centerOnMe({ lat, lng }) {
+    meMarker.setLatLng([lat, lng]);
+    map.flyTo([lat, lng]);
   }
 
   const createVehicleMarker = (vehicle) => {
@@ -119,6 +124,7 @@ window.map = (function iife() {
     getIcon,
     createVehicleMarker,
     updateVehicleMarkerPosition,
+    centerOnMe,
     toWGS84,
     fromWGS84,
   };

@@ -2,6 +2,7 @@
   --brand-color: rgb(0, 157, 219);
   --brand-text-color: white;
   --brand-text-color-dim: rgba(255,255,255,.5);
+  --dark-text-color: dimgray;
 }
 
 html {
@@ -70,6 +71,35 @@ body {
   position: absolute;
   top: 0.62em;
   right: 1em;
+}
+
+.tabs {
+  display: flex;
+  justify-content: center;
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+}
+.tab {
+  background-color: whitesmoke;
+  border: 1px solid gray;
+  border-right: none;
+  color: var(--dark-text-color);
+  cursor: pointer;
+  text-align: center;
+  padding: .5em 1em;
+}
+.tab:last-child {
+  border: 1px solid gray;
+}
+.tab.active {
+  background-color: white;
+  border: 1px solid var(--brand-color);
+  border-bottom: none;
+  color: var(--brand-color);
+}
+.tab.active + .tab{
+  border-left: none;
 }
 
 .location-input {
@@ -276,8 +306,25 @@ body {
   padding: 1em 1.5em;
 }
 
-.google-map {
+.map-component,
+.map-component__map,
+#map {
   height: 100%;
+}
+.map-component__status {
+  background-color: rgba(244,244,244,.7);
+  border-radius: 2px;
+  box-shadow: 0 0 0 2px rgba(0,0,0,.2);
+  color: var(--dark-text-color);
+  content: '';
+  display: block;
+  font-size: 11px;
+  padding: .2em .5em;
+  position: absolute;
+  right: 10px;
+  top: 46px;
+  user-select: none;
+  z-index: 9999;
 }
 
 .top-nav {
@@ -304,35 +351,6 @@ body {
   .digital-clock {
     display: flex;
   }
-}
-
-.tabs {
-  display: flex;
-  justify-content: center;
-  list-style-type: none;
-  margin: 0;
-  padding: 0;
-}
-.tab {
-  background-color: whitesmoke;
-  border: 1px solid gray;
-  border-right: none;
-  color: dimgray;
-  cursor: pointer;
-  text-align: center;
-  padding: .5em 1em;
-}
-.tab:last-child {
-  border: 1px solid gray;
-}
-.tab.active {
-  background-color: white;
-  border: 1px solid var(--brand-color);
-  border-bottom: none;
-  color: var(--brand-color);
-}
-.tab.active + .tab{
-  border-left: none;
 }
 
 .information-page {

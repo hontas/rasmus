@@ -115,8 +115,8 @@ window.VT = (function VT() {
       .then(fetchMiddleware);
   }
 
-  function getClosestStops({ lat, long }, limit = 5) {
-    const url = `${travelPlanner}/location.nearbystops?originCoordLat=${lat}&originCoordLong=${long}&maxNo=${limit}&format=json`;
+  function getClosestStops({ lat, lng }, limit = 5) {
+    const url = `${travelPlanner}/location.nearbystops?originCoordLat=${lat}&originCoordLong=${lng}&maxNo=${limit}&format=json`;
     anropaVasttrafik(url)
       .then((json) => {
         if (json.LocationList.errorText) {
@@ -165,7 +165,7 @@ window.VT = (function VT() {
 
   return {
     init,
-    getClosestStop: (lat, long) => getClosestStops({ lat, long }, 1),
+    getClosestStop: (pos) => getClosestStops(pos, 1),
     getClosestStops,
     findStops,
     getTripSuggestion,
