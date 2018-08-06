@@ -13,13 +13,22 @@
 </head>
 <body>
   <div id="app">
-    <div v-if="devMode" class="flerp">localhost - in development:</div>
     <div class="top-nav">
       <ul class="tabs">
-        <li class="tab" :class="{ active: (tab === 2) }" @click="changeTab(2)">Avgångar (västtrafik)</li>
-        <li class="tab" :class="{ active: (tab === 3) }" @click="changeTab(3)">Ankomster (västtrafik)</li>
-        <li class="tab" :class="{ active: (tab === 4) }" @click="changeTab(4)">Karta</li>
-        <li class="tab" :class="{ active: (tab === 5) }" @click="changeTab(5)">Info</li>
+        <li class="tab" :class="{ active: (tab === 2) }" @click="changeTab(2)">
+          Avgångar <span class="tab--desktop">(västtrafik)</span>
+        </li>
+        <li class="tab" :class="{ active: (tab === 3) }" @click="changeTab(3)">
+          Ankomster <span class="tab--desktop"> (västtrafik)</span>
+        </li>
+        <li class="tab" :class="{ active: (tab === 4) }" @click="changeTab(4)">
+          <i class="tab--mobile fa fa-map"></i>
+          <span class="tab--desktop">Karta</span>
+        </li>
+        <li class="tab" :class="{ active: (tab === 5) }" @click="changeTab(5)">
+          <i class="tab--mobile fa fa-info-circle"></i>
+          <span class="tab--desktop">Info</span>
+        </li>
       </ul>
       <digital-clock></digital-clock>
     </div>
@@ -40,7 +49,12 @@ const transformPosition = ({ coords }) => ({
   lat: coords.latitude,
   lng: coords.longitude
 });
-const positionPromise = getPosition().then(transformPosition);
+const positionPromise = getPosition()
+  .then((pos) => {
+    console.log('got position');
+    return pos;
+  })
+  .then(transformPosition);
 
 Vue.component('digital-clock', {
   data() {
@@ -455,12 +469,15 @@ Vue.component('station-info', {
 });
 
 const getUpdateInterval = (zoomFactor) => (4000000 / Math.pow(zoomFactor, 3) * 2);
-
+// <i class="fa fa-location-arrow" aria-hidden="true"></i>
 Vue.component('map-component', {
   template: `
     <div class="map-component">
       <div class="map-component__status">
-        <span>Uppdateringsfrekvens: {{ (updateInterval / 1000).toFixed(1) }}s.</span>
+        <span>Uppdates every {{ (updateInterval / 1000).toFixed(1) }}s.</span>
+        <i v-if="isLoadingLiveMap" class="fa fa-spin fa-spinner" aria-hidden="true"></i>
+        <i v-if="!isLoadingLiveMap && !getLiveMapError && getLiveMapRequestId" class="fa fa-check" aria-hidden="true"></i>
+        <i v-if="!isLoadingLiveMap && getLiveMapError" class="fa fa-warning" :title="getLiveMapError" aria-hidden="true"></i>
         <label>
           Folllow me
           <input v-model="followMe" type="checkbox" />
@@ -476,6 +493,8 @@ Vue.component('map-component', {
       markers: [],
       followMe: false,
       getLiveMapRequestId: 0,
+      getLiveMapError: '',
+      isLoadingLiveMap: false,
       updateInterval: getUpdateInterval(13)
     };
   },
@@ -492,7 +511,7 @@ Vue.component('map-component', {
     });
   },
   beforeDestroy() {
-    this.map.off();
+    this.map && this.map.off();
     clearTimeout(this.timeoutId);
   },
   watch: {
@@ -532,8 +551,17 @@ Vue.component('map-component', {
       console.log('get vehicle positions');
       const requestId = ++this.getLiveMapRequestId;
       const [west, south, east, north] = this.map.getBounds().toBBoxString().split(',').map(Number);
+      this.isLoadingLiveMap = true;
       return window.VT.getLiveMap({ south, west, north, east })
-        .then((vehicles) => this.plotVehicles(vehicles, requestId));
+        .then((vehicles) => {
+          this.plotVehicles(vehicles, requestId);
+          this.getLiveMapError = '';
+          this.isLoadingLiveMap = false;
+        })
+        .catch((reason) => {
+          this.getLiveMapError = reason.toString();
+          this.isLoadingLiveMap = false;
+        });
     },
     plotVehicles(vehicles, requestId) {
       // only plot positions from latest request
@@ -592,8 +620,7 @@ Vue.component('information-page', {
 new Vue({
   el: '#app',
   data: {
-    tab: 2,
-    devMode: location.hostname === 'localhost'
+    tab: 2
   },
   methods: {
     changeTab(tab) {

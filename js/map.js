@@ -31,7 +31,7 @@ window.map = (function iife() {
 
   function initMap({ rootElement, position, zoom = 13 }) {
     const { lat, lng } = position;
-    map = L.map(rootElement.getAttribute('id'))
+    map = L.map(rootElement)
       .setView([lat, lng], zoom);
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {

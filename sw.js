@@ -14,12 +14,14 @@ const urlsToCache = [
   '/css/fonts/fontawesome-webfont.ttf',
   '/css/fonts/fontawesome-webfont.woff',
   '/css/fonts/fontawesome-webfont.woff2',
-  '/js/vendor/vue.js',
+  '/js/vendor/leaflet@1.3.3.js',
+  '/js/vendor/vue@2.5.17.js',
+  '/js/googleDriveAPI.js',
+  '/js/map.js',
   '/js/resrobot.js',
   '/js/sl.js',
-  '/js/trafikMeddelanden.js',
-  '/js/tv.js',
-  '/js/vt.js'
+  '/js/trafikverket.js',
+  '/js/vasttrafik.js'
 ].map((str) => str.replace('/', pathName));
 
 self.addEventListener('install', (event) => {
