@@ -1,24 +1,25 @@
 {
   "short_name": "Resmus",
   "name": "Rasmus rese-app",
+  "description": "Avgångar, ankomster och karta byggt på Västtrafiks öppna API",
   "icons": [
     {
-      "src": "launcher-icon-1x.png",
+      "src": "assets/launcher-icon-1x.png",
       "type": "image/png",
       "sizes": "48x48"
     },
     {
-      "src": "launcher-icon-2x.png",
+      "src": "assets/launcher-icon-2x.png",
       "type": "image/png",
       "sizes": "96x96"
     },
     {
-      "src": "launcher-icon-4x.png",
+      "src": "assets/launcher-icon-4x.png",
       "type": "image/png",
       "sizes": "192x192"
     },
     {
-      "src": "launcher-icon-4x.png",
+      "src": "assets/launcher-icon-4x.png",
       "type": "image/png",
       "sizes": "512x512"
     }
