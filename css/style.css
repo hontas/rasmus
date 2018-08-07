@@ -81,34 +81,43 @@ body {
   padding: 0;
 }
 .tab {
-  background-color: whitesmoke;
-  border: 1px solid gray;
-  border-right: none;
-  color: var(--dark-text-color);
+  background-color: var(--brand-color);
+  border-right: 1px solid var(--brand-text-color-dim);
+  color: var(--brand-text-color-dim);
   cursor: pointer;
   flex-grow: 1;
   text-align: center;
-  padding: .5em 1em;
 }
 .tab:last-child {
-  border: 1px solid gray;
+  border-right-width: 0;
 }
 .tab--desktop {
   display: none;
 }
 .tab.active {
   background-color: white;
-  border: 1px solid var(--brand-color);
-  border-bottom: none;
   color: var(--brand-color);
 }
-.tab.active + .tab{
-  border-left: none;
+.tab a {
+  color: inherit;
+  display: block;
+  padding: .5em 1em;
+  text-decoration: none;
+}
+.tab a:focus {
+  outline: none;
+}
+.tab:not(.active) a:hover,
+.tab:not(.active) a:focus {
+  color: var(--brand-text-color);
 }
 
 @media screen and (min-width: 650px) {
   .tab--mobile { display: none; }
   .tab--desktop { display: unset; }
+  .tab:last-child {
+    border-right-width: 1px;
+  }
 }
 
 .digital-clock {

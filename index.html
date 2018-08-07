@@ -15,19 +15,27 @@
   <div id="app">
     <div class="top-nav">
       <ul class="tabs">
-        <li class="tab" :class="{ active: (tab === 2) }" @click="changeTab(2)">
-          Avgångar <span class="tab--desktop">(västtrafik)</span>
+        <li class="tab" :class="{ active: (tab === 2) }">
+          <a href="#" @click.prevent="changeTab(2)">
+            Avgångar <span class="tab--desktop">(västtrafik)</span>
+          </a>
         </li>
-        <li class="tab" :class="{ active: (tab === 3) }" @click="changeTab(3)">
-          Ankomster <span class="tab--desktop"> (västtrafik)</span>
+        <li class="tab" :class="{ active: (tab === 3) }">
+          <a href="#" @click.prevent="changeTab(3)">
+            Ankomster <span class="tab--desktop"> (västtrafik)</span>
+          </a>
         </li>
-        <li class="tab" :class="{ active: (tab === 4) }" @click="changeTab(4)">
-          <i class="tab--mobile fa fa-map"></i>
-          <span class="tab--desktop">Karta</span>
+        <li class="tab" :class="{ active: (tab === 4) }">
+          <a href="#" @click.prevent="changeTab(4)">
+            <i class="tab--mobile fa fa-map"></i>
+            <span class="tab--desktop">Karta</span>
+          </a>
         </li>
-        <li class="tab" :class="{ active: (tab === 5) }" @click="changeTab(5)">
-          <i class="tab--mobile fa fa-info-circle"></i>
-          <span class="tab--desktop">Info</span>
+        <li class="tab" :class="{ active: (tab === 5) }">
+          <a href="#" @click.prevent="changeTab(5)">
+            <i class="tab--mobile fa fa-info-circle"></i>
+            <span class="tab--desktop">Info</span>
+          </a>
         </li>
       </ul>
       <digital-clock></digital-clock>
