@@ -91,9 +91,6 @@ body {
 .tab:last-child {
   border-right-width: 0;
 }
-.tab--desktop {
-  display: none;
-}
 .tab.active {
   background-color: white;
   color: var(--brand-color);
@@ -112,11 +109,18 @@ body {
   color: var(--brand-text-color);
 }
 
+.only-desktop {
+  display: none;
+}
+
 @media screen and (min-width: 650px) {
-  .tab--mobile { display: none; }
+  .only-mobile { display: none; }
   .tab--desktop { display: unset; }
   .tab:last-child {
     border-right-width: 1px;
+  }
+  .only-desktop {
+    display: unset;
   }
 }
 

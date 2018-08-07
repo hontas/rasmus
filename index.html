@@ -19,24 +19,24 @@
       <ul class="tabs">
         <li class="tab" :class="{ active: (tab === 2) }">
           <a href="#" @click.prevent="changeTab(2)">
-            Avgångar <span class="tab--desktop">(västtrafik)</span>
+            Avgångar <span class="only-desktop">(västtrafik)</span>
           </a>
         </li>
         <li class="tab" :class="{ active: (tab === 3) }">
           <a href="#" @click.prevent="changeTab(3)">
-            Ankomster <span class="tab--desktop"> (västtrafik)</span>
+            Ankomster <span class="only-desktop"> (västtrafik)</span>
           </a>
         </li>
         <li class="tab" :class="{ active: (tab === 4) }">
           <a href="#" @click.prevent="changeTab(4)" title="map">
-            <i class="tab--mobile fa fa-map"></i>
-            <span class="tab--desktop">Karta</span>
+            <i class="only-mobile fa fa-map"></i>
+            <span class="only-desktop">Karta</span>
           </a>
         </li>
         <li class="tab" :class="{ active: (tab === 5) }">
           <a href="#" @click.prevent="changeTab(5)" title="info">
-            <i class="tab--mobile fa fa-info-circle"></i>
-            <span class="tab--desktop">Info</span>
+            <i class="only-mobile fa fa-info-circle"></i>
+            <span class="only-desktop">Info</span>
           </a>
         </li>
       </ul>
@@ -440,7 +440,10 @@ Vue.component('station-info', {
         <location-input locationApi="VT" displayNearbyStops label="Hållplats" :parentLoading="isLoading" :disabled="!initialized" @set-location="setFrom"></location-input>
       </div>
       <ul class="station-info__trips-filter" v-if="location.id">
-        <li>Filter:</li>
+        <li>
+          <i class="only-mobile fa fa-filter"></i>
+          <span class="only-desktop">Filter:</span>
+        </li>
         <li>
           <select v-model="filter.dest">
             <option value="">{{ this.fromToLabel }}</option>
@@ -465,7 +468,7 @@ Vue.component('station-info', {
             <option value="1440">24 timmar</option>
           </select>
         </li>
-        <li>
+        <li class="only-desktop">
           <label>
             Live update
             <input type="checkbox" name="live" v-model="isLive">
