@@ -57,7 +57,10 @@ self.addEventListener('fetch', (event) => {
             cache.put(event.request, networkResponse.clone());
           }
           return networkResponse;
-        });
+        })
+        .catch((reason) =>
+          console.log(`[sw|fetch] ${event.request.url} FAILED. ${reason}`)
+        );
 
       return response || fetchPromise;
     }()));
