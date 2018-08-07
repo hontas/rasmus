@@ -364,6 +364,9 @@ Vue.component('station-info', {
     },
     fromToLabel() {
       return this.arrivals ? 'Från' : 'Till';
+    },
+    arriveDepartLabel() {
+      return this.arrivals ? 'Ankommer' : 'Avgår';
     }
   },
   created() {
@@ -446,19 +449,19 @@ Vue.component('station-info', {
         </li>
         <li>
           <select v-model="filter.dest">
-            <option value="">{{ this.fromToLabel }}</option>
+            <option value="">{{ fromToLabel }}</option>
             <option v-for="dest in destinations" :key="dest" :value="dest">{{ dest }}</option>
           </select>
         </li>
         <li>
           <select v-model="filter.track">
-            <option value="">Hållplats</option>
+            <option value="">Hpl</option>
             <option v-for="track in tracks" :key="track" :value="track">{{ track }}</option>
           </select>
         </li>
         <li>
           <select v-model="timeSpan">
-            <option value="">Avgångar inom</option>
+            <option value="">{{ arriveDepartLabel }} inom</option>
             <option value="30">30 min</option>
             <option value="60">1 timme</option>
             <option value="120">2 timmar</option>
