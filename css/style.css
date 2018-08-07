@@ -180,18 +180,18 @@ body {
   position: absolute;
   width: 100%;
 }
+.location-input input:focus {
+  border: 1px solid gray;
+  outline: none;
+}
 
 .location-input .fa {
   position: absolute;
   line-height: 2.2em;
   right: 1.7em;
 }
-.location-input .location-input__suggestions .fa {
-  position: initial;
-  margin-left: .5em;
-}
 
-.location-input .location-input__suggestions {
+.location-input__suggestions {
   background: var(--brand-color);
   list-style: none;
   font-size: 0.875em;
@@ -203,17 +203,21 @@ body {
   z-index: 10;
 }
 
+.location-input__suggestion .fa {
+  position: initial;
+  margin-left: .5em;
+}
+
 .location-input.with-label input,
 .location-input.with-label .location-input__suggestions {
   left: var(--left-offset);
   width: calc(100% - var(--left-offset));
 }
-.location-input input:focus {
-  border: 1px solid gray;
-  outline: none;
-}
 
-.location-input .location-input__suggestions li:first-child:before {
+.location-input__suggestion:first-child {
+  border-top: 1px solid var(--brand-color);
+}
+.location-input__suggestion:first-child:before {
   --arrow-size: 5px;
   border-left: var(--arrow-size) solid transparent;
   border-right: var(--arrow-size) solid transparent;
@@ -227,11 +231,12 @@ body {
   height: 0;
 }
 
-.location-input .location-input__suggestions button {
+.location-input__suggestion button {
   -webkit-appearance: none;
   background: transparent;
   border: 0;
   color: white;
+  cursor: pointer;
   display: block;
   font-size: 1em;
   padding: 0.5em 0.75em;
@@ -240,15 +245,15 @@ body {
   width: 100%;
 }
 
-.location-input .location-input__suggestion:first-child button {
+.location-input__suggestion:first-child button {
   padding-top: .75em;
 }
-.location-input .location-input__suggestion:last-child button {
+.location-input__suggestion:last-child button {
   padding-bottom: .75em;
 }
 
-.location-input .location-input__suggestions button:hover,
-.location-input .location-input__suggestions button:focus {
+.location-input__suggestions button:hover,
+.location-input__suggestions button:focus {
   background: whitesmoke;
   color: var(--brand-color);
   outline: none;

@@ -59,12 +59,12 @@ const transformPosition = ({ coords }) => ({
   lat: coords.latitude,
   lng: coords.longitude
 });
-const positionPromise = getPosition()
-  .then((pos) => {
-    console.log('got position');
-    return pos;
-  })
-  .then(transformPosition);
+let positionPromise;
+const getPositionPromise = () => {
+  if (positionPromise) return positionPromise;
+  positionPromise = getPosition();
+  return positionPromise;
+}
 
 Vue.component('digital-clock', {
   data() {
@@ -114,6 +114,12 @@ Vue.component('trips-table', {
           </tr>
         </thead>
         <tbody>
+          <tr v-show="isLoading">
+            <td colspan="5">
+              Hämtar {{ this.arrivals ? 'ankomster' : 'avgångar' }}...
+              <i class="fa fa-spin fa-spinner" aria-hidden="true"></i>
+            </td>
+          </tr>
           <tr v-for="trip in trips" :key="trip.id" :class="{ 'trip--cancelled': trip.cancelled }">
             <td class="trip-line" :style="{ backgroundColor: trip.fgColor, color: trip.bgColor }">
               {{ trip.sname }}
@@ -131,12 +137,6 @@ Vue.component('trips-table', {
             <td class="trip-time"><span v-if="!trip.rtTime">ca&nbsp;</span>{{ trip.time }}</td>
             <td class="trip-time is-late"><span v-if="trip.isLate">{{ trip.rtTime }}</span></td>
             <td class="trip-track">{{ trip.track }}</td>
-          </tr>
-          <tr v-show="isLoading">
-            <td colspan="5">
-              Hämtar {{ this.arrivals ? 'ankomster' : 'avgångar' }}...
-              <i class="fa fa-spin fa-spinner" aria-hidden="true"></i>
-            </td>
           </tr>
           <tr v-show="!isLoading && from && trips.length === 0">
             <td colspan="5">Inga resor att visa</td>
@@ -172,7 +172,7 @@ Vue.component('location-input', {
     return {
       show: false,
       isFetching: false,
-      fetchingNearbyStops: this.displayNearbyStops,
+      fetchingNearbyStops: false,
       searchText: '',
       suggestions: [],
       nearbyStations: []
@@ -189,18 +189,21 @@ Vue.component('location-input', {
   created() {
     this.debouncedGetSuggestions = debounce(this.getSuggestions, 350, this);
     if (!this.displayNearbyStops) return;
-    positionPromise
-      .then(window[this.locationApi].getClosestStops)
-      .then((stations) => {
-        this.nearbyStations = stations;
-        this.fetchingNearbyStops = false;
-      })
-      .catch((reason) => {
-        console.error(reason);
-        this.fetchingNearbyStops = false;
-      });
   },
   methods: {
+    getNearbyStops() {
+      this.fetchingNearbyStops = true;
+      getPositionPromise()
+        .then(window[this.locationApi].getClosestStops)
+        .then((stations) => {
+          this.nearbyStations = stations;
+          this.fetchingNearbyStops = false;
+        })
+        .catch((reason) => {
+          console.error(reason);
+          this.fetchingNearbyStops = false;
+        });
+    },
     onInput({ target: { value } }) {
       if (!value) {
         this.suggestions = [];
@@ -219,7 +222,7 @@ Vue.component('location-input', {
     },
     findNearestStop() {
       this.isFetching = true;
-      positionPromise
+      getPositionPromise()
         .then(window[this.locationApi].getClosestStop)
         .then((location) => {
           if (location) this.onSelect(location);
@@ -294,10 +297,14 @@ Vue.component('location-input', {
       </label>
 
       <ul v-show="show" class="location-input__suggestions">
-        <li class="location-input__suggestion" v-if="fetchingNearbyStops" @keyup="handleKeyInput">
-          <button @click.prevent>
-            Hämtar närliggande hållplatser
-            <i class="fa fa-spinner fa-spin"></i>
+        <li class="location-input__suggestion" v-if="nearbyStations.length === 0" @keyup="handleKeyInput">
+          <button @click.prevent="getNearbyStops">
+            <i class="fa fa-crosshairs"></i>
+            <span v-if="!fetchingNearbyStops">Använd min plats</span>
+            <span v-if="fetchingNearbyStops">
+              Hämtar närliggande hållplatser
+              <i class="fa fa-spinner fa-spin"></i>
+            </span>
           </button>
         </li>
         <li class="location-input__suggestion" v-if="suggestions.length === 0 && !searchText" v-for="station in nearbyStations" @keyup="handleKeyInput">
@@ -515,7 +522,7 @@ Vue.component('map-component', {
     };
   },
   mounted() {
-    positionPromise.then((position) => {
+    getPositionPromise().then((position) => {
       this.map = window.map.initMap({
         rootElement: document.getElementById('map'),
         position
@@ -673,7 +680,12 @@ function getPosition() {
     } else {
       navigator.geolocation.getCurrentPosition(resolve, reject);
     }
-  });
+  })
+    .then((pos) => {
+      console.log('got position');
+      return pos;
+    })
+    .then(transformPosition);;
 }
 
 function sortNumbersAndLetters(a, b) {
