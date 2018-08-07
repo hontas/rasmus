@@ -1,4 +1,4 @@
-const CACHE_NAME = 'rasmus-resa-v4';
+const CACHE_NAME = 'rasmus-resa-v5';
 const pathName = location.pathname.match(/(\/[^/]+\/([^/]+\/)*)/)[1];
 const urlsToCache = [
   '/',
