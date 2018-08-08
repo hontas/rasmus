@@ -70,10 +70,10 @@ Vue.component('digital-clock', {
   },
   methods: {
     handleResize() {
-      if (window.getComputedStyle(document.querySelector('.digital-clock'))['display'] === 'none') {
-        this.stopInterval();
-      } else {
+      if (isVisibleInDOM(this.$el)) {
         this.startInterval();
+      } else {
+        this.stopInterval();
       }
     },
     startInterval() {
@@ -669,6 +669,10 @@ new Vue({
     }
   }
 });
+
+function isVisibleInDOM(el) {
+  return window.getComputedStyle(el)['display'] !== 'none';
+}
 
 const viaRegExp = /\s*via\s*/;
 function getDestinationVia(departure) {
