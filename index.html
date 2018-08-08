@@ -35,16 +35,7 @@
   <script src="js/vasttrafik.js"></script>
   <script>
 /* global Vue, VT, google */
-const transformPosition = ({ coords }) => ({
-  lat: coords.latitude,
-  lng: coords.longitude
-});
 let positionPromise;
-const getPositionPromise = () => {
-  if (positionPromise) return positionPromise;
-  positionPromise = getPosition();
-  return positionPromise;
-}
 
 Vue.component('digital-clock', {
   data() {
@@ -120,7 +111,7 @@ Vue.component('trips-table', {
         <tbody>
           <tr v-show="isLoading">
             <td colspan="5">
-              Hämtar {{ this.arrivals ? 'ankomster' : 'avgångar' }}...
+              Hämtar trafikdata...
               <i class="fa fa-spin fa-spinner" aria-hidden="true"></i>
             </td>
           </tr>
@@ -495,8 +486,6 @@ Vue.component('station-info', {
   `
 });
 
-const getUpdateInterval = (zoomFactor) => (4000000 / Math.pow(zoomFactor, 3) * 2);
-// <i class="fa fa-location-arrow" aria-hidden="true"></i>
 Vue.component('map-component', {
   template: `
     <div class="map-component">
@@ -670,6 +659,16 @@ new Vue({
   }
 });
 
+/*
+ ********************
+ * Helper functions *
+ ********************
+ */
+
+function getUpdateInterval(zoomFactor) {
+  return (4000000 / Math.pow(zoomFactor, 3) * 2);
+}
+
 function isVisibleInDOM(el) {
   return window.getComputedStyle(el)['display'] !== 'none';
 }
@@ -693,6 +692,19 @@ function debounce(fn, delay, context) {
     if (timeoutId) clearTimeout(timeoutId);
     timeoutId = setTimeout(() => fn.apply(context, args), delay);
   };
+}
+
+function transformPosition({ coords }) {
+  return {
+    lat: coords.latitude,
+    lng: coords.longitude
+  };
+}
+
+function getPositionPromise() {
+  if (positionPromise) return positionPromise;
+  positionPromise = getPosition();
+  return positionPromise;
 }
 
 function getPosition() {

@@ -60,7 +60,7 @@ window.VT = (function VT() {
     const now = new Date();
     const date = now.toISOString().substr(0, 10);
     const time = now.toLocaleTimeString().substr(0, 5);
-    const requestUrl = `${travelPlanner}/arrivalBoard?id=${encodeURIComponent(id)}&date=${encodeURIComponent(date)}&time=${encodeURIComponent(time)}&format=json`;
+    let requestUrl = `${travelPlanner}/arrivalBoard?id=${encodeURIComponent(id)}&date=${encodeURIComponent(date)}&time=${encodeURIComponent(time)}&format=json`;
     if (timeSpan) {
       requestUrl = `${requestUrl}&timeSpan=${timeSpan}`
     }
