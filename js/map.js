@@ -39,16 +39,29 @@ window.map = (function iife() {
         maxZoom: 18,
     }).addTo(map);
 
-    meMarker = L.marker([lat, lng])
-      .addTo(map)
-      .bindPopup("<p>Din position</p>");
+    meMarker = createMarker([lat, lng], {}, "<p>Din position</p>");
 
     return map;
+  }
+
+  function createMarker(latlng, options = {}, content) {
+    const marker = L.marker(latlng, options).addTo(map);
+    if (content) {
+      marker.bindPopup(content);
+    }
+    return marker;
   }
 
   function centerOnMe({ lat, lng }) {
     meMarker.setLatLng([lat, lng]);
     // map.flyTo([lat, lng]);
+  }
+
+  function drawPolyLine(latlngs, color = 'red') {
+    const polyline = L.polyline(latlngs, {color}).addTo(map);
+    // zoom the map to the polyline
+    map.fitBounds(polyline.getBounds());
+    return polyline;
   }
 
   const createVehicleMarker = (vehicle) => {
@@ -68,12 +81,10 @@ window.map = (function iife() {
     `;
 
     const { lat, lng } = fromWGS84(y, x);
-    const marker = L.marker([lat, lng], {
+    const marker = createMarker([lat, lng], {
       icon: getIcon(prodclass),
       title: vehicle.gid
-    })
-      .addTo(map)
-      .bindPopup(content);
+    }, content);
 
     return marker;
   };
@@ -86,8 +97,10 @@ window.map = (function iife() {
   return {
     initMap,
     getIcon,
+    createMarker,
     createVehicleMarker,
     updateVehicleMarkerPosition,
-    centerOnMe
+    centerOnMe,
+    drawPolyLine
   };
 }())

@@ -98,6 +98,16 @@ window.VT = (function VT() {
       .then(({ livemap }) => livemap.vehicles);
   }
 
+  function getJourneyDetail(url) {
+    return anropaVasttrafik(url)
+      .then(({ JourneyDetail }) => JourneyDetail);
+  }
+
+  function getGeometry(url) {
+    return anropaVasttrafik(url)
+      .then(({ Geometry }) => Geometry);
+  }
+
   function anropaVasttrafik(url, userHeaders) {
     const accessTokenPromise = Promise.resolve();
     const headers = {
@@ -183,6 +193,8 @@ window.VT = (function VT() {
     getClosestStop: (pos) => getClosestStops(pos, 1),
     getClosestStops,
     findStops,
+    getGeometry,
+    getJourneyDetail,
     getTripSuggestion,
     getDeparturesFrom,
     getArrivalsTo,

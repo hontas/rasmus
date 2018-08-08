@@ -95,7 +95,14 @@ Vue.component('trips-table', {
     filter: Object,
     from: String
   },
-  methods: {},
+  methods: {
+    getJourneyDetails(ref) {
+      window.VT.getJourneyDetail(ref)
+        .then((resp) => {
+          window.tripDetails = resp.Stop;
+        });
+    }
+  },
   template: `
     <div class="trips-table">
       <table>
@@ -115,7 +122,7 @@ Vue.component('trips-table', {
               <i class="fa fa-spin fa-spinner" aria-hidden="true"></i>
             </td>
           </tr>
-          <tr v-for="trip in trips" :key="trip.id" :class="{ 'trip--cancelled': trip.cancelled }">
+          <tr v-for="trip in trips" :key="trip.id" :class="{ 'trip--cancelled': trip.cancelled }" @click="getJourneyDetails(trip.JourneyDetailRef.ref)">
             <td class="trip-line" :style="{ backgroundColor: trip.fgColor, color: trip.bgColor }">
               {{ trip.sname }}
             </td>
@@ -524,6 +531,22 @@ Vue.component('map-component', {
       this.setupEventListeners();
       this.updateMap();
       console.log('updateInterval', this.updateInterval);
+      if (window.tripDetails) {
+        console.log('window.tripDetails', window.tripDetails);
+        window.map.drawPolyLine(tripDetails.map(({ lat, lon }) => [lat, lon]), '#009ddb');
+        tripDetails.forEach((hpl) => {
+          const message = hpl.depDate ?
+            `Avgår <time datetime="${hpl.depDate}">${hpl.depTime}</time> från spår ${hpl.track}` :
+            `Ankommer <time datetime="${hpl.arrDate}">${hpl.arrTime}</time> till spår ${hpl.track}`;
+
+          window.map.createMarker([hpl.lat, hpl.lon], {}, `
+            <div>
+              <h4>${hpl.name}</h4>
+              <p>${message}</p>
+            </div>
+          `);
+        });
+      }
     });
   },
   beforeDestroy() {
