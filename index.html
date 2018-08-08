@@ -17,42 +17,22 @@
   <div id="app">
     <div class="top-nav">
       <ul class="tabs">
-        <li class="tab" :class="{ active: (tab === 2) }">
-          <a href="#" @click.prevent="changeTab(2)">
-            Avgångar <span class="only-desktop">(västtrafik)</span>
-          </a>
-        </li>
-        <li class="tab" :class="{ active: (tab === 3) }">
-          <a href="#" @click.prevent="changeTab(3)">
-            Ankomster <span class="only-desktop"> (västtrafik)</span>
-          </a>
-        </li>
-        <li class="tab" :class="{ active: (tab === 4) }">
-          <a href="#" @click.prevent="changeTab(4)" title="map">
-            <i class="only-mobile fa fa-map"></i>
-            <span class="only-desktop">Karta</span>
-          </a>
-        </li>
-        <li class="tab" :class="{ active: (tab === 5) }">
-          <a href="#" @click.prevent="changeTab(5)" title="info">
-            <i class="only-mobile fa fa-info-circle"></i>
-            <span class="only-desktop">Info</span>
+        <li v-for="tab in tabs" :key="tab.name" :class="['tab', { active: currentTab === tab.name }]">
+          <a href="#" @click.prevent="changeTab(tab.name)">
+            <i v-if="tab.icon" :class="['only-mobile', 'fa', tab.icon]"></i>
+            <span :class="{ 'only-desktop': tab.icon }">{{ tab.name }}</span>
           </a>
         </li>
       </ul>
       <digital-clock></digital-clock>
     </div>
     <div class="container">
-      <station-info v-if="tab === 2"></station-info>
-      <station-info v-if="tab === 3" arrivals></station-info>
-      <map-component v-if="tab === 4"></map-component>
-      <information-page v-if="tab === 5"></information-page>
+      <component :is="currentTabComponent.componentName" v-bind="currentTabComponent.props"></component>
     </div>
   </div>
 
   <script type="text/javascript" src="js/vendor/vue@2.5.17.min.js"></script>
   <script src="js/vasttrafik.js"></script>
-  <!-- <script src="js/sl.js"></script> -->
   <script>
 /* global Vue, VT, google */
 const transformPosition = ({ coords }) => ({
@@ -69,16 +49,40 @@ const getPositionPromise = () => {
 Vue.component('digital-clock', {
   data() {
     return {
+      intervalId: null,
       hours: '',
       minutes: '',
       seconds: '',
     };
   },
   created() {
+    this.handleResize = debounce(this.handleResize, 250);
+  },
+  mounted() {
     this.updateDateTime();
-    setInterval(this.updateDateTime, 1000);
+    this.startInterval();
+    this.handleResize();
+    window.addEventListener('resize', this.handleResize, false);
+  },
+  beforeDestroy() {
+    this.stopInterval();
+    window.removeEventListener('resize', this.handleResize, false);
   },
   methods: {
+    handleResize() {
+      if (window.getComputedStyle(document.querySelector('.digital-clock'))['display'] === 'none') {
+        this.stopInterval();
+      } else {
+        this.startInterval();
+      }
+    },
+    startInterval() {
+      this.stopInterval();
+      this.intervalId = setInterval(this.updateDateTime, 1000);
+    },
+    stopInterval() {
+      clearInterval(this.intervalId);
+    },
     updateDateTime() {
       const now = new Date();
       this.hours = String(now.getHours()).padStart(2, "0");
@@ -643,11 +647,25 @@ Vue.component('information-page', {
 new Vue({
   el: '#app',
   data: {
-    tab: 2
+    tabs: [
+      { name: 'Avgångar', componentName: 'station-info', icon: '', props: {} },
+      { name: 'Ankomster', componentName: 'station-info', icon: '', props: { arrivals: true } },
+      { name: 'Karta', componentName: 'map-component', icon: 'fa-map', props: {} },
+      { name: 'Info', componentName: 'information-page', icon: 'fa-info-circle', props: {} },
+    ],
+    currentTab: 'Avgångar'
+  },
+  mounted() {
+    console.log('this.currentTabComponent', this.currentTabComponent);
+  },
+  computed: {
+    currentTabComponent() {
+      return this.tabs.find(({ name }) => name === this.currentTab);
+    }
   },
   methods: {
     changeTab(tab) {
-      this.tab = tab;
+      this.currentTab = tab;
     }
   }
 });
