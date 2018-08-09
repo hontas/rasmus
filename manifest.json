@@ -4,22 +4,22 @@
   "description": "Avgångar, ankomster och karta byggt på Västtrafiks öppna API",
   "icons": [
     {
-      "src": "assets/launcher-icon-1x.png",
+      "src": "assets/android/ic_launcher@48.png",
       "type": "image/png",
       "sizes": "48x48"
     },
     {
-      "src": "assets/launcher-icon-2x.png",
+      "src": "assets/android/ic_launcher@96.png",
       "type": "image/png",
       "sizes": "96x96"
     },
     {
-      "src": "assets/launcher-icon-4x.png",
+      "src": "assets/android/ic_launcher@192.png",
       "type": "image/png",
       "sizes": "192x192"
     },
     {
-      "src": "assets/launcher-icon-4x.png",
+      "src": "assets/android/ic_launcher@512.png",
       "type": "image/png",
       "sizes": "512x512"
     }
