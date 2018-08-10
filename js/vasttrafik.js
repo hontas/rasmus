@@ -39,12 +39,15 @@ window.VT = (function VT() {
   function transformTrips(trips) {
     return trips.map((trip) => {
       const isLate = trip.rtTime && trip.rtTime !== trip.time;
+      const time = trip.rtTime || trip.time;
+      const date = trip.rtDate || trip.date;
+      const timestamp = (new Date(`${date}T${time}`)).getTime();
       // const journeyDetail = await anropaVasttrafik(trip.JourneyDetailRef.ref);
       return Object.assign({}, trip, {
-        name: trip.sname || trip.name,
         region: 'VT',
         cancelled: Boolean(trip.cancelled),
-        isLate
+        isLate,
+        timestamp
       });
     });
   }
@@ -199,6 +202,7 @@ window.VT = (function VT() {
     getDeparturesFrom,
     getArrivalsTo,
     getTrafficSituations,
-    getLiveMap
+    getLiveMap,
+    transformTrips
   };
 }());
