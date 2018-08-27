@@ -23,6 +23,7 @@
   <div id="app">
     <div class="top-nav">
       <ul class="tabs">
+        <li class="tab tab-api"><a href="#" @click.prevent="toggleApi()">{{ locationApi }}</a></li>
         <li v-for="tab in tabs" :key="tab.name" :class="['tab', { active: currentTab === tab.name }]">
           <a href="#" @click.prevent="changeTab(tab.name)">
             <i v-if="tab.icon" :class="['only-mobile', 'fa', tab.icon]"></i>
@@ -33,16 +34,28 @@
       <digital-clock></digital-clock>
     </div>
     <div class="container">
-      <component :is="currentTabComponent.componentName" v-bind="currentTabComponent.props"></component>
+      <component :is="currentTabComponent.componentName" v-bind="currentTabComponent.props" :location-api="locationApi"></component>
     </div>
   </div>
 
-  <script type="text/javascript" src="js/vendor/vue@2.5.17.min.js"></script>
+  <script type="text/javascript" src="js/vendor/vue@2.5.17.js"></script>
+  <script src="js/trafikverket.js"></script>
   <script src="js/vasttrafik.js"></script>
   <script src="js/googleDriveAPI.js"></script>
   <script>
-/* global Vue, VT, google */
+/* global Vue */
 let positionPromise;
+const locationAPIs = ['VT', 'TV'];
+const apiDict = {
+  TV: {
+    track: 'Spår',
+    sname: 'Anmärkn.'
+  },
+  VT: {
+    track: 'Läge',
+    sname: 'Linje'
+  }
+};
 
 Vue.component('digital-clock', {
   data() {
@@ -100,7 +113,9 @@ Vue.component('trips-table', {
     trips: Array,
     isLoading: Boolean,
     filter: Object,
-    from: String
+    from: String,
+    locationApi: String,
+    fromToLabel: String
   },
   methods: {
     getJourneyDetails(trip) {
@@ -111,16 +126,24 @@ Vue.component('trips-table', {
         });
     }
   },
+  computed: {
+    metaLabel() {
+      return apiDict[this.locationApi].sname;
+    },
+    trackLabel() {
+      return apiDict[this.locationApi].track;
+    }
+  },
   template: `
     <div class="trips-table">
       <table>
         <thead>
           <tr>
-            <th>Linje</th>
-            <th>{{ this.fromToLabel }}</th>
             <th>Tid</th>
+            <th>{{ this.fromToLabel }}</th>
             <th>Ny tid</th>
-            <th>Läge {{ filter.track }}</th>
+            <th>{{ this.trackLabel }} {{ filter.track }}</th>
+            <th>{{ this.metaLabel }}</th>
           </tr>
         </thead>
         <tbody>
@@ -131,9 +154,7 @@ Vue.component('trips-table', {
             </td>
           </tr>
           <tr v-for="trip in trips" :key="trip.id" :class="{ 'trip--cancelled': trip.cancelled }" @click="getJourneyDetails(trip)">
-            <td class="trip-line" :style="{ backgroundColor: trip.fgColor, color: trip.bgColor || 'white' }">
-              {{ trip.sname }}
-            </td>
+            <td class="trip-time">{{ trip.time }}</td>
             <td class="trip-dest">
               <div>
                 <span class="trip-dest-name">
@@ -144,9 +165,11 @@ Vue.component('trips-table', {
               </div>
               <div class="trip-dest-via"><small v-if="trip.via"> via {{ trip.via }}</small></div>
             </td>
-            <td class="trip-time">{{ trip.time }}</td>
             <td class="trip-time is-late"><span v-if="trip.isLate">{{ trip.rtTime }}</span></td>
             <td class="trip-track">{{ trip.track }}</td>
+            <td class="trip-line" :style="{ backgroundColor: trip.fgColor, color: trip.bgColor || 'white' }">
+              {{ trip.sname }}
+            </td>
           </tr>
           <tr v-show="!isLoading && from && trips.length === 0">
             <td colspan="5">Inga resor att visa</td>
@@ -160,6 +183,7 @@ Vue.component('trips-table', {
 Vue.component('location-input', {
   props: {
     label: String,
+    location: Object,
     disabled: Boolean,
     parentLoading: Boolean,
     displayNearbyStops: {
@@ -175,6 +199,16 @@ Vue.component('location-input', {
           typeof window[value].findStops === 'function' &&
           typeof window[value].getClosestStop === 'function' &&
           typeof window[value].getClosestStops === 'function';
+      }
+    }
+  },
+  watch: {
+    locationApi(newVal, oldVal) {
+      if (newVal !== oldVal) {
+        this.suggestions = [];
+        if (this.location && this.location.name) {
+          this.debouncedGetSuggestions(this.location.name);
+        }
       }
     }
   },
@@ -196,17 +230,23 @@ Vue.component('location-input', {
       return this.suggestions.length || this.nearbyStations.length;
     }
   },
-  created() {
+  mounted() {
+    if (this.location) {
+      this.searchText = this.location.name;
+    }
     this.debouncedGetSuggestions = debounce(this.getSuggestions, 350, this);
-    if (!this.displayNearbyStops) return;
   },
   methods: {
     getNearbyStops() {
+      this.nearbyStations = [];
       this.fetchingNearbyStops = true;
       getPositionPromise()
         .then(window[this.locationApi].getClosestStops)
         .then((stations) => {
-          this.nearbyStations = stations;
+          // only update nearbyStations promise resolves with correct data
+          if (stations && stations.length && stations[0].region === this.locationApi) {
+            this.nearbyStations = stations || [];
+          }
           this.fetchingNearbyStops = false;
         })
         .catch((reason) => {
@@ -333,22 +373,28 @@ Vue.component('location-input', {
 
 Vue.component('station-info', {
   props: {
-    arrivals: Boolean
+    arrivals: Boolean,
+    locationApi: String
   },
   data() {
+    // eslint-disable-next-line
+    const savedData = JSON.parse(window[this.$options._componentTag] || '{}');
     return {
       location: {},
       isLoading: false,
-      initialized: false,
+      initialized: [],
       trips: [],
       manualTrips: [],
-      info: {},
+      info: {
+        messages: []
+      },
       filter: {
         track: '',
         dest: ''
       },
       isLive: true,
-      timeSpan: ''
+      timeSpan: '',
+      ...savedData
     };
   },
   computed: {
@@ -385,10 +431,10 @@ Vue.component('station-info', {
         .filter((t) => (track ? t.track === track : true))
         .filter(({ direction, origin }) => (dest ? (direction === dest || origin === dest) : true));
 
-        return [
-          ...filteredManual,
-          ...filteredTrips
-        ].sort((a, b) => a.timestamp - b.timestamp);
+      return [
+        ...filteredManual,
+        ...filteredTrips
+      ].sort((a, b) => a.timestamp - b.timestamp);
     },
     fromToLabel() {
       return this.arrivals ? 'Från' : 'Till';
@@ -397,25 +443,20 @@ Vue.component('station-info', {
       return this.arrivals ? 'Ankommer' : 'Avgår';
     }
   },
-  created() {
-    VT.init()
-      .then(() => {
-        this.initialized = true;
-        window.gDrive.getManualDepartures()
-          .then((res) => {
-            this.manualTrips = window.VT.transformTrips(res);
-            console.log('this.manualTrips', this.manualTrips);
-          });
-      });
+  mounted() {
+    this.init()
+      .then(() => this.loadManualDepartures());
   },
   beforeDestroy() {
+    // eslint-disable-next-line
+    window[this.$options._componentTag] = JSON.stringify(this._data);
     clearTimeout(this.lastTimeoutId);
   },
   watch: {
     arrivals(newVal, oldVal) {
       if (newVal !== oldVal) {
         this.trips = [];
-        this.info = {};
+        this.info = { messages: [] };
         if (this.location.region) {
           this.getDepartures();
         }
@@ -429,11 +470,41 @@ Vue.component('station-info', {
         clearTimeout(this.lastTimeoutId);
       }
     },
-    timeSpan(newVal) {
+    timeSpan() {
       this.getDepartures();
+    },
+    locationApi(newVal, oldVal) {
+      if (newVal !== oldVal) {
+        clearTimeout(this.lastTimeoutId);
+        this.trips = [];
+        this.filter = {
+          track: '',
+          dest: ''
+        };
+        this.init()
+          .then(() => this.loadManualDepartures());
+      }
     }
   },
   methods: {
+    init() {
+      if (this.initialized.includes(this.locationApi)) {
+        return Promise.resolve();
+      }
+      return window[this.locationApi].init()
+        .then(() => {
+          this.initialized.push(this.locationApi);
+        });
+    },
+    loadManualDepartures() {
+      if (this.locationApi === 'VT') {
+        window.gDrive.getManualDepartures()
+          .then((res) => {
+            this.manualTrips = window.VT.transformTrips(res);
+            console.log('this.manualTrips', this.manualTrips);
+          });
+      }
+    },
     setFrom(location) {
       console.log('set location', location);
       this.location = location || {};
@@ -461,7 +532,7 @@ Vue.component('station-info', {
           console.warn('reason', reason);
           this.isLoading = false;
         });
-      window[this.location.region].getTrafficSituations('stoparea', this.location.id)
+      window[this.location.region].getTrafficSituations(this.location.id, 'stoparea')
         .then((situations) => {
           this.info = situations;
         });
@@ -473,7 +544,7 @@ Vue.component('station-info', {
         <p v-if="!initialized">
           Initierar... <i class="fa fa-spin fa-spinner"></i>
         </p>
-        <location-input locationApi="VT" displayNearbyStops label="Hållplats" :parentLoading="isLoading" :disabled="!initialized" @set-location="setFrom"></location-input>
+        <location-input :location="location" :location-api="locationApi" displayNearbyStops label="Hållplats" :parentLoading="isLoading" :disabled="!initialized" @set-location="setFrom"></location-input>
       </div>
       <ul class="station-info__trips-filter" v-if="location.id">
         <li>
@@ -511,8 +582,11 @@ Vue.component('station-info', {
           </label>
         </li>
       </ul>
-      <trips-table :isLoading="isLoading" :trips="filteredTrips" :filter="filter" :from="location.name"></trips-table>
-      <p class="station-info__situations" v-if="location.name">{{ this.info.message || 'Inga trafikstörningar.' }}</p>
+      <trips-table :isLoading="isLoading" :trips="filteredTrips" :filter="filter" :from="location.name" :location-api="locationApi" :from-to-label="fromToLabel"></trips-table>
+      <div class="station-info__situations" v-if="location.name">
+        <p v-for="msg in info.messages">{{ msg }}</p>
+        <p v-if="info.messages.length === 0">Inga trafikstörningar.</p>
+      </div>
     </div>
   `
 });
@@ -574,7 +648,7 @@ Vue.component('map-component', {
     });
   },
   beforeDestroy() {
-    this.map && this.map.off();
+    if (this.map) { this.map.off(); }
     clearTimeout(this.timeoutId);
   },
   watch: {
@@ -607,7 +681,7 @@ Vue.component('map-component', {
       window.requestAnimationFrame(() => {
         this.timeoutId = setTimeout(() => {
           this.getLiveMap().then(this.updateMap);
-        }, this.updateInterval)
+        }, this.updateInterval);
       });
     },
     getLiveMap() {
@@ -640,9 +714,9 @@ Vue.component('map-component', {
       }
 
       const newMarkers = vehicles
-        .filter(({ gid }) => !this.markers
-          .some(({ options: { title } }) => gid === title))
-          .map(window.map.createVehicleMarker);
+        .filter(({ gid }) =>
+          !this.markers.some(({ options: { title } }) => gid === title))
+        .map(window.map.createVehicleMarker);
 
       const oldMarkers = this.markers.reduce((res, marker) => {
         const vehicle = vehicles.find(({ gid }) => gid === marker.options.title);
@@ -673,7 +747,7 @@ Vue.component('information-page', {
     return {};
   },
   computed: {},
-  created() {
+  mounted() {
     window.gDrive.printInfoDoc();
   },
   methods: {}
@@ -689,10 +763,8 @@ new Vue({
       { name: 'Karta', componentName: 'map-component', icon: 'fa-map', props: {} },
       { name: 'Info', componentName: 'information-page', icon: 'fa-info-circle', props: {} },
     ],
-    currentTab: 'Avgångar'
-  },
-  mounted() {
-    console.log('this.currentTabComponent', this.currentTabComponent);
+    currentTab: 'Avgångar',
+    locationApi: locationAPIs[0]
   },
   computed: {
     currentTabComponent() {
@@ -702,6 +774,9 @@ new Vue({
   methods: {
     changeTab(tab) {
       this.currentTab = tab;
+    },
+    toggleApi() {
+      this.locationApi = locationAPIs.find((api) => api !== this.locationApi);
     }
   }
 });
@@ -766,7 +841,7 @@ function getPosition() {
       console.log('got position');
       return pos;
     })
-    .then(transformPosition);;
+    .then(transformPosition);
 }
 
 function sortNumbersAndLetters(a, b) {

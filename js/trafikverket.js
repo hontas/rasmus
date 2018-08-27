@@ -1,9 +1,5 @@
-var TV = (function() {
+window.TV = (function TrafikVerket() {
   const auth = '<LOGIN authenticationkey="2dfa6ea579bd45e3ac3810eb1a97adb6" />';
-  const locations = {
-    home: { lat: 59.30, long: 17.98 },
-    centralStation: { lat: 59.330714, long: 18.057920 }
-  };
   const stationMap = {};
 
   const api = {
@@ -92,35 +88,46 @@ var TV = (function() {
     });
   }
 
-  tvApiRequest('TrainStation')
-    .then((stations) => stations.forEach((station) => {
-      stationMap[station.LocationSignature] = station.AdvertisedLocationName;
-    }));
+  function getClosestStops({ lat, lng }) {
+    return tvApiRequest('TrainStation', { lat, long: lng }, 5000)
+      .then((response) => response
+        .slice(0, 5)
+        .map(transformStation)
+      );
+  }
 
   return {
-    getClosestStops({ lat, long }) {
-      return tvApiRequest('TrainStation', { lat, long }, 5000)
-        .then((response) => response
-          .slice(0, 5)
-          .map(transformStation)
-        )
+    init() {
+      return tvApiRequest('TrainStation')
+        .then((stations) => stations.forEach((station) => {
+          stationMap[station.LocationSignature] = station.AdvertisedLocationName;
+        }));
     },
-    getClosestStop(lat, long) {
-      return getClosestStops(lat, long)
+    getClosestStops,
+    getClosestStop(pos) {
+      return getClosestStops(pos)
         .then((stops) => stops[0]);
+    },
+    getTrafficSituations(location) {
+      return tvApiRequest('TrainMessage', location)
+        .then(logMiddleware)
+        .then((situations) => ({
+          messages: situations.map(({ ExternalDescription }) => ExternalDescription)
+        }));
     },
     getDeparturesFrom(station) {
       return tvApiRequest('TrainAnnouncement', station)
         .then((resp) => (resp || []).slice(0, 30))
         .then(logMiddleware)
         .then((deps) => deps.map((dep) => ({
-          id: dep.LocationSignature,
-          direction: dep.ToLocation && TV.stationMap[dep.ToLocation[0].LocationName] || '',
-          via: dep.ViaToLocation && TV.stationMap[dep.ViaToLocation[0].LocationName] || '',
+          id: dep.ActivityId,
+          direction: dep.ToLocation && (stationMap[dep.ToLocation[0].LocationName] || ''),
+          via: dep.ViaToLocation && (stationMap[dep.ViaToLocation[0].LocationName] || ''),
           name: `${dep.ProductInformation.join(' ')}`,
           time: dep.AdvertisedTimeAtLocation.substr(-8, 5),
           isLate: false,
-          track: dep.TrackAtLocation
+          track: dep.TrackAtLocation,
+          sname: dep.ProductInformation[0]
         })));
     },
     findStops(name) {

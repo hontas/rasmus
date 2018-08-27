@@ -6,14 +6,14 @@ window.VT = (function VT() {
   let authToken;
   let expDate;
 
-  function getTrafficSituations(method, gid) {
+  function getTrafficSituations(gid, method) {
     const url = method ? `${trafficSituations}/${method}/${gid}` : trafficSituations;
     return anropaVasttrafik(url, { Accept: 'application/json' })
       .then((sit) => (console.log('sit', sit), sit))
       .then((situations) => situations.reduce((res, { title, description, affectedLines }) => ({
-        message: `${res.message} ${title} ${description}`,
+        messages: res.messages.concat(`${title} ${description}`),
         affectedLines: [].concat(res.affectedLines, affectedLines.map(({ designation }) => designation))
-      }), { message: '' }));
+      }), { messages: [] }));
   }
 
   function getTripSuggestion(from, dest) {
@@ -134,6 +134,10 @@ window.VT = (function VT() {
       .then((json) => {
         if (json.LocationList.errorText) {
           throw new Error(json.LocationList.errorText);
+        }
+
+        if (!json.LocationList.StopLocation) {
+          return [];
         }
 
         return json.LocationList.StopLocation

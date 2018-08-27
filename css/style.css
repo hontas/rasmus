@@ -108,6 +108,9 @@ body {
 .tab:not(.active) a:focus {
   color: var(--brand-text-color);
 }
+.tab-api {
+  flex-grow: 0;
+}
 
 .only-desktop {
   display: none;
